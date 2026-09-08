@@ -24,10 +24,10 @@
 - **Why**: Domain 객체를 직접 노출하면 내부 구조가 유출되고, DTO는 계약 안정성과 레이어 독립 진화를 보장한다.
 - **Violation example**: API 엔드포인트가 ORM Entity를 그대로 반환하여 내부 타임스탬프와 캐시 필드가 노출되는 경우
 
-### 4. [TODO: Add project-specific invariant]
-- **Rule**: [What must never change]
-- **Why**: [Why this is critical]
-- **Violation example**: [What would breaking this look like]
+### 4. CareLink Consent Boundary (동의 없는 접근 금지)
+- **Rule**: 다른 User(예: 부모)의 데이터를 조회하거나 대신 기록하려면, 두 User 사이에 `CareLink.status = accepted`가 반드시 먼저 성립해야 한다. pending/rejected 상태에서는 어떤 조회/쓰기도 허용하지 않는다.
+- **Why**: 이 프로젝트의 핵심 차별점(가족 간 건강 데이터 공유)이 곧 가장 민감한 개인정보 접근 지점이다. 동의 없는 접근을 허용하면 법적 문제로 직결되고, 신뢰가 생명인 헬스케어 서비스의 존립 기반이 무너진다.
+- **Violation example**: `dashboard-service.ts`의 `getParentDashboard()`가 `care-link-repository`의 `status` 값을 확인하지 않고 `target_user_id`만으로 바로 HealthLog를 조회하는 경우
 
 ---
 
@@ -37,6 +37,10 @@
 
 | From | Cannot Import | Reason |
 |------|--------------|--------|
+| `src/app` (페이지 + `api/` Route Handler/Server Action) | `@/lib/data`, `@/lib/llm`, `@supabase/supabase-js`, `prisma` | Presentation은 Data를 직접 호출하지 않는다. `src/services`를 경유한다 |
+| `src/components` | `@/lib/data`, `@/lib/llm`, `@supabase/supabase-js`, `prisma` | 위와 동일 (컴포넌트도 Presentation) |
+| `src/services` | `react`, `next/*` | Logic은 Presentation 프레임워크에 의존하지 않는다 (프레임워크 독립성) |
+| `src/lib/data`, `src/lib/llm` | `react`, `next/*`, `@/app`, `@/components` | Data는 Presentation을 역참조하지 않는다 |
 
 > 상세 규칙: `.harness/gates/rules/boundaries.yaml`
 

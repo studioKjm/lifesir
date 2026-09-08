@@ -19,8 +19,8 @@ general:
 # ─── Next.js ──────────────────────────────────────────────────────
 nextjs:
   - from: "src/components"
-    cannot_import: ["prisma", "@prisma/client", "drizzle-orm", "pg", "mysql2", "better-sqlite3", "mongoose"]
-    reason: "프론트엔드 컴포넌트에서 DB 직접 접근 금지. Server Action 또는 API를 경유하세요."
+    cannot_import: ["prisma", "@prisma/client", "drizzle-orm", "pg", "mysql2", "better-sqlite3", "mongoose", "@/lib/data", "@/lib/llm", "@supabase/supabase-js"]
+    reason: "프론트엔드 컴포넌트에서 DB/LLM 직접 접근 금지. Server Action 또는 API를 경유하세요."
     stacks: [nextjs]
     file_patterns: ["*.tsx", "*.ts", "*.jsx", "*.js"]
 
@@ -35,6 +35,27 @@ nextjs:
     reason: "공유 라이브러리에서 React/Next.js UI 의존 금지. 프레임워크 독립적으로 유지"
     stacks: [nextjs]
     file_patterns: ["*.ts", "*.js"]
+
+  # App Router(lifesir): 페이지뿐 아니라 Route Handler/Server Action(src/app/api 포함)도
+  # Data 레이어를 직접 호출하지 않고 src/services(Logic)를 경유해야 한다.
+  # (Pages Router의 src/pages 규칙과 달리 App Router는 src/app 전체가 대상)
+  - from: "src/app"
+    cannot_import: ["@/lib/data", "@/lib/llm", "@supabase/supabase-js", "prisma", "@prisma/client", "drizzle-orm"]
+    reason: "[LAYER:P→D] App Router 페이지/레이아웃/Route Handler/Server Action에서 Data 레이어 직접 import 금지. src/services를 경유하세요."
+    stacks: [nextjs]
+    file_patterns: ["*.tsx", "*.ts"]
+
+  - from: "src/lib/data"
+    cannot_import: ["react", "next/", "@/components", "@/app"]
+    reason: "[LAYER:D→P] Data 레이어에서 Presentation 의존 금지"
+    stacks: [nextjs]
+    file_patterns: ["*.ts"]
+
+  - from: "src/lib/llm"
+    cannot_import: ["react", "next/", "@/components", "@/app"]
+    reason: "[LAYER:D→P] Data 레이어에서 Presentation 의존 금지"
+    stacks: [nextjs]
+    file_patterns: ["*.ts"]
 
 # ─── NestJS ──────────────────────────────────────────────────────
 nestjs:
