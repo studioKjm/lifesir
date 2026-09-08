@@ -1,0 +1,7 @@
+.env
+.env.local
+.env.*.local
+.review-artifacts/
+.harness/ouroboros/session.db
+.harness/ouroboros/interviews/
+.harness/ouroboros/evaluations/
