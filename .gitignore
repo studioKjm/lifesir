@@ -29,6 +29,9 @@
 /supabase/.branches
 /supabase/.temp
 
+# claude code agent worktrees (isolation: "worktree" subagents)
+/.claude/worktrees/
+
 # misc
 .DS_Store
 *.pem

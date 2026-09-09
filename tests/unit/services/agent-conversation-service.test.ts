@@ -6,7 +6,7 @@ import * as healthLogRepository from "@/lib/data/health-log-repository";
 import * as agentPersonaRepository from "@/lib/data/agent-persona-repository";
 import * as userRepository from "@/lib/data/user-repository";
 import { generateReply, LLMError } from "@/lib/llm/llm-client";
-import type { AgentPersonaRecord, ConversationRecord, MessageRecord, UserRecord } from "@/lib/data/records";
+import type { AgentPersonaRecord, ConversationRecord, HealthLogRecord, MessageRecord, UserRecord } from "@/lib/data/records";
 
 vi.mock("@/lib/data/conversation-repository");
 vi.mock("@/lib/data/message-repository");
@@ -87,6 +87,21 @@ function user(overrides: Partial<UserRecord>): UserRecord {
   };
 }
 
+function healthLogRecord(overrides: Partial<HealthLogRecord>): HealthLogRecord {
+  return {
+    id: "h1",
+    userId: "u1",
+    loggedByUserId: "u1",
+    logType: "sleep",
+    value: "6",
+    unit: "시간",
+    loggedAt: "2026-09-09T00:00:00Z",
+    note: null,
+    createdAt: "2026-09-09T00:00:00Z",
+    ...overrides,
+  };
+}
+
 describe("sendMessage (AC-008)", () => {
   beforeEach(() => {
     vi.resetAllMocks();
@@ -161,5 +176,19 @@ describe("sendMessage (AC-008)", () => {
     expect(result.content).toMatch(/잠시 후 다시 시도/);
     expect(messageRepository.appendMessage).toHaveBeenCalledTimes(1); // user 메시지만
     expect(messageRepository.appendMessage).not.toHaveBeenCalledWith("conv-1", "assistant", expect.anything());
+  });
+
+  it("최근 HealthLog가 LLM 호출의 systemPrompt 컨텍스트에 실제로 포함된다 (Test Designer 발견 — 배선 누락 여부 검증)", async () => {
+    vi.mocked(conversationRepository.getById).mockResolvedValue(conversation({ userId: "u1" }));
+    vi.mocked(healthLogRepository.getRecentLogsForUser).mockResolvedValue([
+      healthLogRecord({ logType: "sleep", value: "6", unit: "시간" }),
+    ]);
+    vi.mocked(messageRepository.appendMessage).mockResolvedValue(messageRecord({ role: "assistant" }));
+    vi.mocked(generateReply).mockResolvedValue("잠을 조금 더 주무시는 게 좋겠어요.");
+
+    await sendMessage("u1", { conversationId: "conv-1", content: "요즘 계속 피곤해" });
+
+    const [systemPromptArg] = vi.mocked(generateReply).mock.calls[0];
+    expect(systemPromptArg).toContain("sleep");
   });
 });

@@ -161,4 +161,11 @@ describe("assertCareLinkAccepted (AC-004)", () => {
       code: "NOT_AUTHORIZED",
     });
   });
+
+  it("actorId===targetId(자기 자신)여도 CareLink 없이는 통과시키지 않는다 (Test Designer 발견 — 본인 접근은 이 가드의 책임 범위 밖임을 문서화)", async () => {
+    vi.mocked(careLinkRepository.findBetween).mockResolvedValue(null);
+    await expect(assertCareLinkAccepted("u-self", "u-self")).rejects.toMatchObject({
+      code: "NOT_AUTHORIZED",
+    });
+  });
 });
