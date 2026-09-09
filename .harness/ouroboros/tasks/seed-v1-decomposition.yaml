@@ -27,6 +27,7 @@ decomposition:
       depends_on: []
       estimated_minutes: 25
     - id: "T-003"
+      status: "done"
       ac_ref: "AC-010"
       layer: "presentation"
       description: "src/components/EmptyState.tsx, ErrorBanner.tsx — 데이터 없음/권한없음/LLM실패 공용 안내 컴포넌트"
@@ -86,6 +87,7 @@ decomposition:
       depends_on: ["T-005"]
       estimated_minutes: 20
     - id: "T-010"
+      status: "done"
       ac_ref: "AC-003"
       layer: "logic"
       description: "src/services/care-link-service.ts — requestCareLink(중복 요청 방지 포함), respondCareLink(본인이 target인지 검증)"
@@ -93,6 +95,7 @@ decomposition:
       depends_on: ["T-006"]
       estimated_minutes: 25
     - id: "T-011"
+      status: "done"
       ac_ref: "AC-004"
       layer: "logic"
       description: "src/services/care-link-service.ts — assertCareLinkAccepted(actorId, targetId) 권한 가드 (다른 서비스가 재사용)"
@@ -100,6 +103,7 @@ decomposition:
       depends_on: ["T-006"]
       estimated_minutes: 20
     - id: "T-012"
+      status: "done"
       ac_ref: "AC-006"
       layer: "logic"
       description: "src/services/dashboard-service.ts — getOwnDashboard(userId): log_type별 집계"
@@ -107,6 +111,7 @@ decomposition:
       depends_on: ["T-007"]
       estimated_minutes: 20
     - id: "T-013"
+      status: "done"
       ac_ref: "AC-009"
       layer: "logic"
       description: "src/services/agent-conversation-service.ts — buildSystemPrompt(agentPersona): tone/system_prompt 결합"
@@ -116,6 +121,7 @@ decomposition:
 
     # ─── Phase 4: Logic (2차 — Logic 태스크 의존) ─────────────────
     - id: "T-014"
+      status: "done"
       ac_ref: "AC-001"
       layer: "logic"
       description: "src/services/auth-service.ts — signUp(Supabase Auth 호출 + user-repo insert + T-009 호출로 persona 매칭), signIn"
@@ -123,6 +129,7 @@ decomposition:
       depends_on: ["T-004", "T-009"]
       estimated_minutes: 30
     - id: "T-015"
+      status: "done"
       ac_ref: "AC-005"
       layer: "logic"
       description: "src/services/health-log-service.ts — recordHealthLog(actorId, targetUserId, input): 본인 또는 T-011 가드 통과 시 대리입력"
@@ -130,6 +137,7 @@ decomposition:
       depends_on: ["T-007", "T-011"]
       estimated_minutes: 25
     - id: "T-016"
+      status: "done"
       ac_ref: "AC-007"
       layer: "logic"
       description: "src/services/dashboard-service.ts — getParentDashboard(actorId, careLinkId): T-011 가드 + T-012 집계 로직 재사용"
@@ -137,6 +145,7 @@ decomposition:
       depends_on: ["T-007", "T-011", "T-012"]
       estimated_minutes: 20
     - id: "T-017"
+      status: "done"
       ac_ref: "AC-008"
       layer: "logic"
       description: "src/services/agent-conversation-service.ts — sendMessage(): 최근 HealthLog N건 컨텍스트 조립 + T-013 system prompt + T-002 LLM 호출, 실패 시 폴백 메시지"

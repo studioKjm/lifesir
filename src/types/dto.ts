@@ -18,6 +18,17 @@ export interface SignInInput {
   password: string;
 }
 
+export interface AuthSession {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: number;
+}
+
+export interface AuthResult {
+  user: { id: string; email: string; name: string };
+  session: AuthSession;
+}
+
 export interface HealthLogInput {
   targetUserId?: string; // 미지정 시 본인 기록
   logType: HealthLogType;
@@ -72,6 +83,7 @@ export interface ChatMessageInput {
 
 export interface MessageDTO {
   id: string;
+  conversationId: string;
   role: MessageRole;
   content: string;
   createdAt: string;
