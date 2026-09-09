@@ -6,11 +6,12 @@ decomposition:
   seed_ref: "seed-v1.yaml"
   trd_ref: "docs/TRD.md"
   total_tasks: 25
-  status: "pending"   # pending | in_progress | done — /run이 진행하며 태스크별로 갱신
+  status: "in_progress"   # pending | in_progress | done — /run이 진행하며 태스크별로 갱신
 
   tasks:
     # ─── Phase 1: 공용 기반 (의존성 없음) ─────────────────────────
     - id: "T-001"
+      status: "done"
       ac_ref: "AC-001"
       layer: "data"
       description: "src/lib/data/supabase-client.ts — 서버 전용 Supabase 클라이언트 팩토리 함수 + 환경변수 존재 검증"
@@ -18,6 +19,7 @@ decomposition:
       depends_on: []
       estimated_minutes: 15
     - id: "T-002"
+      status: "done"
       ac_ref: "AC-008"
       layer: "data"
       description: "src/lib/llm/llm-client.ts — Vercel AI Gateway 호출 래퍼 generateReply(), 실패 시 LLMError throw"
@@ -34,6 +36,7 @@ decomposition:
 
     # ─── Phase 2: Data 레포지토리 (T-001 의존) ────────────────────
     - id: "T-004"
+      status: "done"
       ac_ref: "AC-001"
       layer: "data"
       description: "src/lib/data/user-repository.ts — createUser, getUserByEmail, getUserById"
@@ -41,6 +44,7 @@ decomposition:
       depends_on: ["T-001"]
       estimated_minutes: 25
     - id: "T-005"
+      status: "done"
       ac_ref: "AC-002"
       layer: "data"
       description: "src/lib/data/agent-persona-repository.ts — getByAgeBand(), 5개 age_band(10s/20s/30s/40s/50s_plus) seed row 삽입 스크립트"
@@ -48,6 +52,7 @@ decomposition:
       depends_on: ["T-001"]
       estimated_minutes: 20
     - id: "T-006"
+      status: "done"
       ac_ref: "AC-003"
       layer: "data"
       description: "src/lib/data/care-link-repository.ts — create, updateStatus, findByUsers, getPendingForUser"
@@ -55,6 +60,7 @@ decomposition:
       depends_on: ["T-001"]
       estimated_minutes: 25
     - id: "T-007"
+      status: "done"
       ac_ref: "AC-005"
       layer: "data"
       description: "src/lib/data/health-log-repository.ts — createHealthLog, getLogsForUser(userId, logType?)"
@@ -62,6 +68,7 @@ decomposition:
       depends_on: ["T-001"]
       estimated_minutes: 25
     - id: "T-008"
+      status: "done"
       ac_ref: "AC-008"
       layer: "data"
       description: "src/lib/data/conversation-repository.ts, message-repository.ts — createConversation, appendMessage, getRecentMessages"
@@ -71,6 +78,7 @@ decomposition:
 
     # ─── Phase 3: Logic (1차 — Data 직접 의존) ────────────────────
     - id: "T-009"
+      status: "done"
       ac_ref: "AC-002"
       layer: "logic"
       description: "src/services/agent-persona-service.ts — birthDate → age_band 매핑 함수 + getPersonaForUser(birthDate)"

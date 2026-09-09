@@ -198,7 +198,9 @@ check_content() {
     if [[ ! "$file" =~ (test|spec|example|fixture|mock|__test__|_test\.) ]]; then
       for pattern in "${GENERIC_PATTERNS[@]}"; do
         local matches
-        matches=$(grep -nE "$pattern" "$full_path" 2>/dev/null | head -3 || true)
+        # Supabase CLI(config.toml)의 `key = "env(VAR_NAME)"` 는 실제 값이 아니라
+        # 환경변수 간접 참조 표기법이다 — 실제 시크릿이 아니므로 제외한다.
+        matches=$(grep -nE "$pattern" "$full_path" 2>/dev/null | grep -vE '=[[:space:]]*"env\([A-Z_][A-Z0-9_]*\)"' | head -3 || true)
         [ -z "$matches" ] && continue
         while IFS= read -r match; do
           local line_num=$(echo "$match" | cut -d: -f1)

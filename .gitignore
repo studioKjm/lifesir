@@ -5,3 +5,33 @@
 .harness/ouroboros/session.db
 .harness/ouroboros/interviews/
 .harness/ouroboros/evaluations/
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# testing
+/coverage
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# supabase local
+/supabase/.branches
+/supabase/.temp
+
+# misc
+.DS_Store
+*.pem
+npm-debug.log*
+.vercel
+*.tsbuildinfo
