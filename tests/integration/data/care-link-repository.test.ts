@@ -57,4 +57,16 @@ describe("care-link-repository (통합, 로컬 Supabase)", () => {
     const result = await careLinkRepository.findBetween(a, b);
     expect(result).toBeNull();
   });
+
+  it("getAllForUser는 요청자/대상자 방향과 무관하게 관련된 모든 링크를 반환한다 (T-020)", async () => {
+    const child = await makeUser("child3");
+    const parent = await makeUser("parent3");
+    const stranger = await makeUser("stranger3");
+    const created = await careLinkRepository.create(child, parent);
+    await careLinkRepository.create(stranger, child);
+
+    const forChild = await careLinkRepository.getAllForUser(child);
+    expect(forChild.map((l) => l.id)).toContain(created.id);
+    expect(forChild.length).toBeGreaterThanOrEqual(2);
+  });
 });

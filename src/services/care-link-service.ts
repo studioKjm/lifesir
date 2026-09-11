@@ -3,7 +3,7 @@
 import * as careLinkRepository from "@/lib/data/care-link-repository";
 import * as userRepository from "@/lib/data/user-repository";
 import type { CareLinkRecord } from "@/lib/data/records";
-import type { CareLinkDTO } from "@/types/dto";
+import type { CareLinkDTO, CareLinkListItemDTO } from "@/types/dto";
 
 export type CareLinkErrorCode =
   | "TARGET_NOT_FOUND"
@@ -57,6 +57,31 @@ export async function requestCareLink(requesterUserId: string, targetEmail: stri
 
   const created = await careLinkRepository.create(requesterUserId, target.id);
   return toDTO(created);
+}
+
+/** T-020 — care-links 페이지 목록용. id로 단건 조회(카운터파트 이름 없이). */
+export async function getCareLinkById(id: string): Promise<CareLinkDTO | null> {
+  const link = await careLinkRepository.getById(id);
+  return link ? toDTO(link) : null;
+}
+
+/**
+ * T-020 — 로그인 사용자와 관련된 모든 CareLink를 상대방 정보와 함께 반환한다.
+ * 1주 프로토타입 스코프라 카운터파트 조회는 링크당 1회 조회로 단순화한다(N+1 허용).
+ */
+export async function listCareLinks(userId: string): Promise<CareLinkListItemDTO[]> {
+  const links = await careLinkRepository.getAllForUser(userId);
+  const items: CareLinkListItemDTO[] = [];
+  for (const link of links) {
+    const counterpartId = link.requesterUserId === userId ? link.targetUserId : link.requesterUserId;
+    const counterpart = await userRepository.getUserById(counterpartId);
+    items.push({
+      ...toDTO(link),
+      direction: link.requesterUserId === userId ? "sent" : "received",
+      counterpart: counterpart ? { id: counterpart.id, name: counterpart.name, email: counterpart.email } : undefined,
+    });
+  }
+  return items;
 }
 
 export async function respondCareLink(

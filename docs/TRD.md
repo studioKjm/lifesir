@@ -27,7 +27,7 @@ Route Handler/Server Action    권한 검증, 프롬프트 조립          LLM �
 | `app/(auth)/signup/page.tsx` | 회원가입 폼 (email, password, name, birth_date) | AC-001 |
 | `app/(auth)/login/page.tsx` | 로그인 폼 | AC-001 |
 | `app/dashboard/page.tsx` | 본인 HealthLog 대시보드 (Server Component) | AC-006 |
-| `app/dashboard/[careLinkId]/page.tsx` | 부모 대시보드, 읽기전용, 15초 polling | AC-007 |
+| `app/dashboard/[careLinkId]/page.tsx` | 부모 대시보드. 기록 열람은 읽기전용(15초 polling) + HealthLogForm으로 대리 기록 | AC-005, AC-007 |
 | `app/care-links/page.tsx` | CareLink 요청 보내기/목록/수락·거절 | AC-003, AC-004 |
 | `app/chat/page.tsx` | AI 에이전트 대화 UI (스트리밍 표시) | AC-008, AC-009 |
 | `app/api/chat/route.ts` | LLM 스트리밍 응답 Route Handler | AC-008 |

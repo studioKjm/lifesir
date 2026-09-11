@@ -1,6 +1,6 @@
 // T-014 — 회원가입/로그인 (AC-001)
 // Pair Mode(Navigator Plan A)로 설계됨 — 근거는 각 함수 주석 참고.
-import { getSupabaseClient } from "@/lib/data/supabase-client";
+import { createAuthClient } from "@/lib/data/supabase-client";
 import * as userRepository from "@/lib/data/user-repository";
 import { getPersonaForBirthDate } from "@/services/agent-persona-service";
 import type { AuthResult, SignInInput, SignUpInput } from "@/types/dto";
@@ -30,7 +30,7 @@ function toSession(session: { access_token: string; refresh_token: string; expir
  * 기대하는 "회원가입 → 자동 로그인" 플로우).
  */
 export async function signUp(input: SignUpInput): Promise<AuthResult> {
-  const supabase = getSupabaseClient();
+  const supabase = createAuthClient();
 
   const created = await supabase.auth.admin.createUser({
     email: input.email,
@@ -80,8 +80,27 @@ export async function signUp(input: SignUpInput): Promise<AuthResult> {
   };
 }
 
+/**
+ * T-019 — 프록시(src/proxy.ts)는 쿠키 존재만 확인하는 UX 게이트일 뿐, 실제 보안
+ * 경계는 여기다: 각 페이지/Server Action이 쿠키의 access token을 이 함수에 넘겨
+ * 신뢰 가능한 userId를 얻는다. 토큰이 유효하지 않으면 null을 반환한다(예외를
+ * 던지지 않음 — 호출부가 그대로 /login으로 리다이렉트하면 되는 정상 흐름이다).
+ */
+export async function getSessionUser(
+  accessToken: string
+): Promise<{ id: string; email: string; name: string } | null> {
+  const supabase = createAuthClient();
+  const { data, error } = await supabase.auth.getUser(accessToken);
+  if (error || !data.user) return null;
+
+  const profile = await userRepository.getUserById(data.user.id);
+  if (!profile) return null;
+
+  return { id: profile.id, email: profile.email, name: profile.name };
+}
+
 export async function signIn(input: SignInInput): Promise<AuthResult> {
-  const supabase = getSupabaseClient();
+  const supabase = createAuthClient();
 
   const signedIn = await supabase.auth.signInWithPassword({ email: input.email, password: input.password });
   if (signedIn.error || !signedIn.data.session || !signedIn.data.user) {

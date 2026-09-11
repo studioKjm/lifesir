@@ -76,6 +76,13 @@ export interface CareLinkDTO {
   createdAt: string;
 }
 
+// T-020 — care-links 페이지 목록 표시용 (AC-003, AC-004).
+// direction: 내가 요청자면 "sent"(수락 시 내가 상대 대시보드를 볼 수 있음), 내가 대상자면 "received".
+export interface CareLinkListItemDTO extends CareLinkDTO {
+  direction: "sent" | "received";
+  counterpart?: { id: string; name: string; email: string };
+}
+
 export interface ChatMessageInput {
   conversationId?: string; // 미지정 시 새 대화 시작
   content: string;

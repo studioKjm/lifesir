@@ -1,34 +1,48 @@
+/* 디자인 토큰 — "토스 스타일" (2026-09-11 사용자 확정).
+   데스크톱 웹 우선: 시안 단계의 폰 프레임 레이아웃은 상단 네비게이션 바 형태의
+   데스크톱 쉘로 확장했다 (AppShell.tsx 참고). 색상 값은 시안(donghaeng-dashboard-
+   concepts.html [data-version="toss"])과 동일하게 유지해 확정된 톤을 그대로 이어간다. */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: oklch(95% 0.012 250);
+  --surface: oklch(100% 0 0);
+  --surface-2: oklch(97% 0.012 250);
+  --ink: oklch(20% 0.015 260);
+  --ink-muted: oklch(56% 0.012 260);
+  --border: oklch(91% 0.008 260);
+
+  --blue: oklch(56% 0.19 260);
+  --blue-dark: oklch(48% 0.19 260);
+  --blue-soft: oklch(93% 0.035 260);
+  --green: oklch(62% 0.13 150);
+  --green-soft: oklch(93% 0.04 150);
+  --amber: oklch(70% 0.15 75);
+  --amber-soft: oklch(93% 0.04 80);
+  --red: oklch(58% 0.2 25);
+  --red-soft: oklch(93% 0.05 25);
+
+  --radius-lg: 20px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+  --shadow-card: 0 1px 2px oklch(30% 0.03 260 / 0.06), 0 8px 24px oklch(30% 0.03 260 / 0.06);
+  --container: 1120px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bg: oklch(18% 0.014 260);
+    --surface: oklch(23% 0.014 260);
+    --surface-2: oklch(26% 0.014 260);
+    --ink: oklch(94% 0.006 260);
+    --ink-muted: oklch(68% 0.014 260);
+    --border: oklch(33% 0.014 260);
+    --blue-soft: oklch(30% 0.06 260);
+    --green-soft: oklch(28% 0.05 150);
+    --amber-soft: oklch(28% 0.05 80);
+    --red-soft: oklch(30% 0.06 25);
+    --shadow-card: 0 1px 2px oklch(0% 0 0 / 0.3), 0 8px 24px oklch(0% 0 0 / 0.35);
+    color-scheme: dark;
   }
-}
-
-html {
-  height: 100%;
-}
-
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-body {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 * {
@@ -37,13 +51,224 @@ body {
   margin: 0;
 }
 
+html,
+body {
+  height: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Noto Sans KR", "Pretendard", -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 a {
   color: inherit;
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+::selection {
+  background: var(--blue-soft);
+  color: var(--blue-dark);
+}
+
+:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+/* ─── 레이아웃 프리미티브 ─────────────────────────────────────── */
+
+.container {
+  width: 100%;
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 24px;
+}
+
+/* ─── 버튼 ────────────────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 22px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.05s ease;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn--primary {
+  background: var(--blue);
+  color: white;
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--blue-dark);
+}
+
+.btn--ghost {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.btn--ghost:hover:not(:disabled) {
+  background: var(--border);
+}
+
+.btn--danger-ghost {
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.btn--sm {
+  padding: 8px 16px;
+  font-size: 13px;
+}
+
+/* ─── 폼 ──────────────────────────────────────────────────────── */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-muted);
+}
+
+.field input,
+.field select,
+.field textarea {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 14px;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--blue);
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 72px;
+}
+
+/* ─── 뱃지 / 필 ───────────────────────────────────────────────── */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 11px;
+  border-radius: 999px;
+}
+
+.badge--ok {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.badge--wait {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.badge--muted {
+  background: var(--surface-2);
+  color: var(--ink-muted);
+}
+
+/* ─── 안내 컴포넌트 (EmptyState / ErrorBanner 공용 스타일) ───────── */
+
+[role="status"][data-variant] {
+  text-align: center;
+  padding: 56px 24px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--ink-muted);
+}
+
+[role="status"][data-variant] p:first-child {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+[role="alert"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--red-soft);
+  color: var(--red);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+[role="alert"] button {
+  flex: none;
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  color: inherit;
+  cursor: pointer;
 }

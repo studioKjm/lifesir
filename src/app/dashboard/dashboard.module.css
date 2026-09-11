@@ -1,0 +1,56 @@
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 24px;
+  align-items: start;
+  margin-top: 24px;
+}
+
+.formCard {
+  position: sticky;
+  top: 88px;
+}
+
+.entryTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.entryTable th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-muted);
+  padding: 0 0 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.entryTable td {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.entryTable tr:last-child td {
+  border-bottom: none;
+}
+
+.entryValue {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.entryNote {
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+  .formCard {
+    position: static;
+  }
+}

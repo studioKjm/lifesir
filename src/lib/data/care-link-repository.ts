@@ -75,6 +75,18 @@ export async function findBetween(userIdA: string, userIdB: string): Promise<Car
   return data ? toRecord(data) : null;
 }
 
+/** T-020 — care-links 페이지 목록용. 내가 요청자든 대상자든(방향 무관) 관련된 모든 CareLink를 반환한다. */
+export async function getAllForUser(userId: string): Promise<CareLinkRecord[]> {
+  const { data, error } = await getSupabaseClient()
+    .from("care_links")
+    .select(COLUMNS)
+    .or(`requester_user_id.eq.${userId},target_user_id.eq.${userId}`)
+    .order("created_at", { ascending: false });
+
+  if (error) throw new RepositoryError(`CareLink 목록 조회 실패 (userId=${userId})`, { cause: error });
+  return (data ?? []).map(toRecord);
+}
+
 export async function getPendingForUser(targetUserId: string): Promise<CareLinkRecord[]> {
   const { data, error } = await getSupabaseClient()
     .from("care_links")

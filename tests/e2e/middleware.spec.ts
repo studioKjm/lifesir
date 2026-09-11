@@ -8,7 +8,16 @@ test.describe("middleware — 세션 게이트 (AC-001)", () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
-  test("인증 쿠키가 있으면 보호된 경로에서 /login으로 리다이렉트되지 않는다", async ({ page, context }) => {
+  // proxy.ts는 쿠키 "존재 여부"만 보는 얕은 UX 게이트라, 가짜 토큰이어도 통과시킨다.
+  // 진짜 보안 경계는 각 페이지가 T-019(src/app/_lib/session.ts)로 토큰을 검증하는
+  // 지점이다 — 가짜 토큰은 proxy를 통과해도 페이지 단에서 결국 /login으로 돌아간다.
+  // (이 파일은 T-018 시점에는 "가짜 토큰이면 리다이렉트 안 됨"을 기대했지만, 그건
+  // 당시 실제 토큰 검증이 아직 구현되지 않았던 상태였다 — T-019 구현 후 의도된
+  // 동작에 맞춰 기대값을 갱신했다.)
+  test("가짜 인증 쿠키는 proxy는 통과하지만 페이지 레벨 세션 검증에서 /login으로 돌려보낸다", async ({
+    page,
+    context,
+  }) => {
     await context.addCookies([
       {
         name: AUTH_COOKIE_NAME,
@@ -19,7 +28,7 @@ test.describe("middleware — 세션 게이트 (AC-001)", () => {
     ]);
 
     await page.goto("/dashboard");
-    await expect(page).not.toHaveURL(/\/login/);
+    await expect(page).toHaveURL(/\/login/);
   });
 
   for (const path of ["/", "/login", "/signup"]) {

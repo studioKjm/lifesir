@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { signUp, signIn, AuthError } from "@/services/auth-service";
-import { getSupabaseClient } from "@/lib/data/supabase-client";
+import { signUp, signIn, getSessionUser, AuthError } from "@/services/auth-service";
+import { createAuthClient } from "@/lib/data/supabase-client";
 import * as userRepository from "@/lib/data/user-repository";
 import * as agentPersonaService from "@/services/agent-persona-service";
 import type { UserRecord } from "@/lib/data/records";
@@ -12,12 +12,14 @@ vi.mock("@/services/agent-persona-service");
 const mockCreateUser = vi.fn();
 const mockDeleteUser = vi.fn();
 const mockSignInWithPassword = vi.fn();
+const mockGetUser = vi.fn();
 
 function mockSupabase() {
   return {
     auth: {
       admin: { createUser: mockCreateUser, deleteUser: mockDeleteUser },
       signInWithPassword: mockSignInWithPassword,
+      getUser: mockGetUser,
     },
   };
 }
@@ -44,7 +46,7 @@ function user(overrides: Partial<UserRecord>): UserRecord {
 describe("signUp (AC-001)", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getSupabaseClient).mockReturnValue(mockSupabase() as never);
+    vi.mocked(createAuthClient).mockReturnValue(mockSupabase() as never);
   });
 
   it("성공: 계정 생성 + persona 매칭 + 자동 로그인 세션 반환", async () => {
@@ -103,7 +105,7 @@ describe("signUp (AC-001)", () => {
 describe("signIn (AC-001)", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getSupabaseClient).mockReturnValue(mockSupabase() as never);
+    vi.mocked(createAuthClient).mockReturnValue(mockSupabase() as never);
   });
 
   it("성공: 세션 + 프로필 정보 반환", async () => {
@@ -120,5 +122,32 @@ describe("signIn (AC-001)", () => {
     mockSignInWithPassword.mockResolvedValue({ data: { session: null, user: null }, error: { message: "invalid" } });
 
     await expect(signIn({ email: "a@test.local", password: "wrong" })).rejects.toThrow(AuthError);
+  });
+});
+
+describe("getSessionUser (AC-001, T-019)", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(createAuthClient).mockReturnValue(mockSupabase() as never);
+  });
+
+  it("유효한 토큰이면 프로필을 반환한다", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "auth-user-1" } }, error: null });
+    vi.mocked(userRepository.getUserById).mockResolvedValue(user({}));
+
+    const result = await getSessionUser("valid-token");
+    expect(result).toEqual({ id: "auth-user-1", email: "a@test.local", name: "테스트" });
+  });
+
+  it("토큰이 유효하지 않으면 null을 반환한다(예외를 던지지 않음)", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: null }, error: { message: "invalid token" } });
+    expect(await getSessionUser("bad-token")).toBeNull();
+  });
+
+  it("auth 유저는 있지만 public.users 프로필이 없으면 null을 반환한다", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "auth-user-1" } }, error: null });
+    vi.mocked(userRepository.getUserById).mockResolvedValue(null);
+
+    expect(await getSessionUser("valid-token")).toBeNull();
   });
 });

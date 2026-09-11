@@ -3,6 +3,8 @@ import {
   requestCareLink,
   respondCareLink,
   assertCareLinkAccepted,
+  listCareLinks,
+  getCareLinkById,
   CareLinkError,
 } from "@/services/care-link-service";
 import * as careLinkRepository from "@/lib/data/care-link-repository";
@@ -167,5 +169,49 @@ describe("assertCareLinkAccepted (AC-004)", () => {
     await expect(assertCareLinkAccepted("u-self", "u-self")).rejects.toMatchObject({
       code: "NOT_AUTHORIZED",
     });
+  });
+});
+
+describe("listCareLinks (AC-003, T-020)", () => {
+  beforeEach(() => vi.resetAllMocks());
+
+  it("내가 요청자인 링크는 direction=sent, 대상자인 링크는 direction=received로 분류하고 상대 정보를 붙인다", async () => {
+    vi.mocked(careLinkRepository.getAllForUser).mockResolvedValue([
+      link({ id: "l1", requesterUserId: "me", targetUserId: "u-parent", status: "accepted" }),
+      link({ id: "l2", requesterUserId: "u-child", targetUserId: "me", status: "pending" }),
+    ]);
+    vi.mocked(userRepository.getUserById).mockImplementation(async (id) =>
+      user({ id, name: id === "u-parent" ? "부모" : "자녀" })
+    );
+
+    const result = await listCareLinks("me");
+
+    expect(result).toEqual([
+      expect.objectContaining({ id: "l1", direction: "sent", counterpart: expect.objectContaining({ id: "u-parent" }) }),
+      expect.objectContaining({ id: "l2", direction: "received", counterpart: expect.objectContaining({ id: "u-child" }) }),
+    ]);
+  });
+
+  it("상대 유저를 찾지 못하면 counterpart 없이 반환한다", async () => {
+    vi.mocked(careLinkRepository.getAllForUser).mockResolvedValue([link({ requesterUserId: "me", targetUserId: "gone" })]);
+    vi.mocked(userRepository.getUserById).mockResolvedValue(null);
+
+    const result = await listCareLinks("me");
+    expect(result[0].counterpart).toBeUndefined();
+  });
+});
+
+describe("getCareLinkById (T-020)", () => {
+  beforeEach(() => vi.resetAllMocks());
+
+  it("존재하면 DTO를 반환한다", async () => {
+    vi.mocked(careLinkRepository.getById).mockResolvedValue(link({ id: "l1" }));
+    const result = await getCareLinkById("l1");
+    expect(result?.id).toBe("l1");
+  });
+
+  it("없으면 null을 반환한다", async () => {
+    vi.mocked(careLinkRepository.getById).mockResolvedValue(null);
+    expect(await getCareLinkById("missing")).toBeNull();
   });
 });

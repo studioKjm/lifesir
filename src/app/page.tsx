@@ -1,69 +1,56 @@
-import Image from "next/image";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getSession } from "@/app/_lib/session";
 import styles from "./page.module.css";
 
-export default function Home() {
+export default async function Home() {
+  const session = await getSession();
+  if (session) redirect("/dashboard");
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>
-            To get started, edit the{" "}
-            <code className={styles.code}>page.tsx</code> file.
+    <div className={styles.hero}>
+      <div className={styles.wrap}>
+        <div>
+          <span className={styles.eyebrow}>가족 건강 케어</span>
+          <h1 className={styles.title}>
+            부모와 자녀가
+            <br />
+            <em>동의</em>로 이어지는 건강 기록
           </h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className={styles.desc}>
+            운동, 수면, 체중, 식사, 복약을 하루하루 기록하고 연령대에 맞춰 다르게 답하는 AI 코치와 대화하세요.
+            자녀는 부모가 연결을 수락한 경우에만 건강 기록을 확인할 수 있어요.
           </p>
+          <div className={styles.ctaRow}>
+            <Link href="/signup" className="btn btn--primary">
+              무료로 시작하기
+            </Link>
+            <Link href="/login" className="btn btn--ghost">
+              로그인
+            </Link>
+          </div>
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className={styles.preview} aria-hidden="true">
+          <p className={styles.previewLabel}>오늘의 체중</p>
+          <p className={styles.previewValue}>
+            58.2<small style={{ fontSize: 18 }}>kg</small>
+          </p>
+          <div className={styles.previewRow}>
+            <div className={styles.previewTile}>
+              <p className={styles.previewTileLabel}>운동</p>
+              <p className={styles.previewTileValue}>30분</p>
+            </div>
+            <div className={styles.previewTile}>
+              <p className={styles.previewTileLabel}>수면</p>
+              <p className={styles.previewTileValue}>7.2시간</p>
+            </div>
+            <div className={styles.previewTile}>
+              <p className={styles.previewTileLabel}>복약</p>
+              <p className={styles.previewTileValue}>완료</p>
+            </div>
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

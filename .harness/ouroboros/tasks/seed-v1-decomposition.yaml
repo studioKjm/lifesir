@@ -6,7 +6,7 @@ decomposition:
   seed_ref: "seed-v1.yaml"
   trd_ref: "docs/TRD.md"
   total_tasks: 25
-  status: "in_progress"   # pending | in_progress | done — /run이 진행하며 태스크별로 갱신
+  status: "done"   # pending | in_progress | done — /run이 진행하며 태스크별로 갱신
 
   tasks:
     # ─── Phase 1: 공용 기반 (의존성 없음) ─────────────────────────
@@ -163,6 +163,7 @@ decomposition:
       depends_on: ["T-014"]
       estimated_minutes: 20
     - id: "T-019"
+      status: "done"
       ac_ref: "AC-001"
       layer: "presentation"
       description: "app/(auth)/signup/page.tsx, login/page.tsx — 폼 + Server Action(T-014 호출)"
@@ -172,6 +173,7 @@ decomposition:
 
     # ─── Phase 7: Presentation (병렬 가능) ────────────────────────
     - id: "T-020"
+      status: "done"
       ac_ref: "AC-003"
       layer: "presentation"
       description: "app/care-links/page.tsx — 요청 폼/목록/수락·거절 버튼, Server Action(T-010 호출)"
@@ -179,6 +181,7 @@ decomposition:
       depends_on: ["T-010", "T-019"]
       estimated_minutes: 30
     - id: "T-021"
+      status: "done"
       ac_ref: "AC-005"
       layer: "presentation"
       description: "src/components/HealthLogForm.tsx + Server Action(T-015 호출) — 본인/대리입력 겸용"
@@ -186,6 +189,7 @@ decomposition:
       depends_on: ["T-015", "T-019"]
       estimated_minutes: 25
     - id: "T-022"
+      status: "done"
       ac_ref: "AC-008"
       layer: "presentation"
       description: "app/chat/page.tsx, app/api/chat/route.ts(스트리밍, T-017 호출), ChatWindow 컴포넌트"
@@ -195,6 +199,7 @@ decomposition:
 
     # ─── Phase 8~9: 대시보드 (헬스로그 폼 이후) ───────────────────
     - id: "T-023"
+      status: "done"
       ac_ref: "AC-006"
       layer: "presentation"
       description: "app/dashboard/page.tsx — 본인 대시보드(T-012 호출), DashboardChart, 데이터 없을 시 T-003 EmptyState"
@@ -202,6 +207,7 @@ decomposition:
       depends_on: ["T-012", "T-021", "T-003"]
       estimated_minutes: 25
     - id: "T-024"
+      status: "done"
       ac_ref: "AC-007"
       layer: "presentation"
       description: "app/dashboard/[careLinkId]/page.tsx, app/api/dashboard/[careLinkId]/route.ts(T-016 호출) — 15초 polling, 미승인 시 T-003 ErrorBanner"
@@ -210,7 +216,13 @@ decomposition:
       estimated_minutes: 30
 
     # ─── Phase 10: 전체 통합 검증 ──────────────────────────────────
+    # 검증됨(2026-09-11): orb start → supabase start 후 npm run test:e2e 그린 확인.
+    # 이 과정에서 실제 버그 1건 발견/수정 — src/lib/data/supabase-client.ts의
+    # getSupabaseClient() 싱글턴에 auth-service가 signInWithPassword/getUser를
+    # 직접 호출해 세션이 전역으로 유출되던 문제. createAuthClient()(캐시되지 않는
+    # 전용 클라이언트)로 분리해 해결. 자세한 내용은 supabase-client.ts 주석 참고.
     - id: "T-025"
+      status: "done"
       ac_ref: "AC-011"
       layer: "presentation"
       description: "tests/e2e/full-flow.spec.ts — 회원가입→로그인→CareLink 요청/수락→HealthLog 기록→대시보드 확인→AI 대화 전체 플로우"

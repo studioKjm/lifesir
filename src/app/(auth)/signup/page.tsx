@@ -1,0 +1,57 @@
+import Link from "next/link";
+import { signUpAction } from "./actions";
+
+export const metadata = { title: "회원가입 — 동행" };
+
+const ERROR_COPY: Record<string, string> = {
+  INVALID_INPUT: "모든 항목을 입력해주세요.",
+  WEAK_PASSWORD: "비밀번호는 8자 이상이어야 해요.",
+  EMAIL_ALREADY_EXISTS: "이미 가입된 이메일이에요. 로그인해주세요.",
+  SIGNUP_FAILED: "가입에 실패했어요. 잠시 후 다시 시도해주세요.",
+};
+
+export default async function SignUpPage({ searchParams }: PageProps<"/signup">) {
+  const { error } = await searchParams;
+  const errorCode = Array.isArray(error) ? error[0] : error;
+
+  return (
+    <div className="card">
+      <h1 style={{ fontSize: 22, fontWeight: 900, marginBottom: 6 }}>회원가입</h1>
+      <p style={{ color: "var(--ink-muted)", fontSize: 14, marginBottom: 24 }}>
+        생년월일에 맞춰 AI 코치의 말투가 달라져요.
+      </p>
+
+      {errorCode && (
+        <div role="alert" style={{ marginBottom: 16 }}>
+          <p>{ERROR_COPY[errorCode] ?? "알 수 없는 오류가 발생했어요."}</p>
+        </div>
+      )}
+
+      <form action={signUpAction} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div className="field">
+          <label htmlFor="name">이름</label>
+          <input id="name" name="name" type="text" autoComplete="name" required />
+        </div>
+        <div className="field">
+          <label htmlFor="birthDate">생년월일</label>
+          <input id="birthDate" name="birthDate" type="date" required />
+        </div>
+        <div className="field">
+          <label htmlFor="email">이메일</label>
+          <input id="email" name="email" type="email" autoComplete="email" required />
+        </div>
+        <div className="field">
+          <label htmlFor="password">비밀번호</label>
+          <input id="password" name="password" type="password" autoComplete="new-password" minLength={8} required />
+        </div>
+        <button type="submit" className="btn btn--primary btn--block">
+          가입하고 시작하기
+        </button>
+      </form>
+
+      <p style={{ textAlign: "center", fontSize: 13, color: "var(--ink-muted)", marginTop: 20 }}>
+        이미 계정이 있으신가요? <Link href="/login" style={{ color: "var(--blue)", fontWeight: 700 }}>로그인</Link>
+      </p>
+    </div>
+  );
+}
