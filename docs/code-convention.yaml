@@ -59,6 +59,16 @@ general:
   - id: GEN-006
     rule: 주석은 "왜(why)"를 설명한다. "무엇(what)"은 코드 자체가 설명해야 한다.
     stacks: [all]
+  - id: GEN-007
+    rule: >
+      AC/스펙이 "~할 수 있다"고 명시한 능력은, 그 능력을 실제로 호출하는 Logic/Data 코드가
+      있다는 것만으로 충족된 게 아니다 — 사용자가 실제로 그 경로에 도달할 수 있는 Presentation
+      진입점이 최소 하나는 있어야 한다. 컴포넌트가 optional prop으로 어떤 기능을 "지원"하도록
+      설계해놓고 그 prop을 채워 렌더링하는 페이지가 하나도 없다면, 구현이 아니라 미완성이다
+      (2026-09-11 lifesir AC-005: 대리입력이 서비스단엔 있었지만 어떤 페이지도 호출하지 않음).
+      TRD를 작성/구현할 때 seed의 각 AC 문장을 "이 능력을 실제로 클릭해서 쓸 수 있는 페이지가
+      어디인가?"로 한 번씩 되짚는다.
+    stacks: [all]
 
 typescript:
   - id: TS-001
@@ -103,6 +113,16 @@ nextjs:
     stacks: [nextjs]
   - id: NEXT-004
     rule: 이미지는 next/image를 사용한다. img 태그를 직접 사용하지 않는다.
+    stacks: [nextjs]
+  - id: NEXT-005
+    rule: >
+      서버 전용 SDK 클라이언트(Supabase 등)를 모듈 스코프 싱글턴으로 캐싱해 재사용할 때,
+      그 인스턴스에서 세션을 바꾸는 메서드(signInWithPassword, signUp, auth.getUser(token),
+      setSession 등)를 직접 호출하지 않는다 — 그 순간부터 같은 프로세스가 처리하는 다른
+      모든 요청이 방금 그 세션의 권한으로 실행되어버리는 전역 세션 유출이 생긴다
+      (2026-09-11 lifesir 프로젝트 실제 E2E에서 발견: 로그인 1회 후 서비스 role 권한이
+      조용히 사라짐). 세션을 바꾸는 호출은 반드시 캐시하지 않는 전용 클라이언트에서만
+      한다. 데이터 조회/변경용 싱글턴과 인증용 일회성 클라이언트를 분리한다.
     stacks: [nextjs]
 
 nestjs:

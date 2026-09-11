@@ -5,6 +5,7 @@
 .harness/ouroboros/session.db
 .harness/ouroboros/interviews/
 .harness/ouroboros/evaluations/
+.harness/ouroboros/evolutions/
 
 # dependencies
 /node_modules

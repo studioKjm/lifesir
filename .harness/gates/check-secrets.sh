@@ -150,6 +150,17 @@ check_content() {
     # Exclude .harness/* (the gate scripts themselves contain the secret
     # patterns as literal strings, which otherwise self-trigger).
     files_to_check=$(cd "$PROJECT_ROOT" && git diff --cached --name-only 2>/dev/null | grep -v '^\.harness/' || true)
+  elif git -C "$PROJECT_ROOT" rev-parse --git-dir >/dev/null 2>&1; then
+    # Full-tree scan, but git-aware: skip anything .gitignore already excludes.
+    # Local-only secrets (.env.local, supabase/.temp/*) are *meant* to stay
+    # untracked — flagging them every run is noise, not a real leak, since
+    # they can never reach a commit (2026-09-11: this previously used a raw
+    # `find` here that ignored .gitignore entirely, unlike check_env_files()
+    # above which was already git-aware).
+    files_to_check=$(cd "$PROJECT_ROOT" && git ls-files --cached --others --exclude-standard 2>/dev/null \
+      | grep -v '^\.harness/' \
+      | grep -vE '\.(lock|min\.js|min\.css|png|jpg|gif|ico|woff2?|ttf|mp4|mp3)$' \
+      | grep -v '^package-lock\.json$')
   else
     files_to_check=$(cd "$PROJECT_ROOT" && find . -type f \
       -not -path '*/.git/*' \

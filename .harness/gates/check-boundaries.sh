@@ -45,6 +45,7 @@ CHECKED=0
 current_from=""
 current_reason=""
 current_stacks=""
+current_match_mode=""
 declare -a current_imports=()
 declare -a current_patterns=()
 
@@ -79,7 +80,17 @@ check_rule() {
     [ -z "$file" ] && continue
     for imp in "${current_imports[@]}"; do
       local matches
-      matches=$(grep -n "$imp" "$file" 2>/dev/null | grep -v "^[[:space:]]*#" | grep -v "^[[:space:]]*//" | head -5 || true)
+      if [ "$current_match_mode" = "import" ]; then
+        # 실제 import/require 문에서 모듈 지정자로 쓰였을 때만 매칭한다 — 단순
+        # 부분문자열 매칭은 예: getTimezoneOffset()의 "fs", crypto.randomUUID()의
+        # "crypto"(Web Crypto 전역, Node 모듈 아님)처럼 무관한 코드에서도 오탐을
+        # 낸다(2026-09-11 실측). imp 끝의 "/"는 제거하고 하위 경로를 허용한다.
+        local imp_pattern="${imp%/}"
+        imp_pattern="${imp_pattern//./\\.}"
+        matches=$(grep -nE "(^|[^A-Za-z0-9_])(import|require)\\b[^;]*[\"']${imp_pattern}(/[^\"']*)?[\"']" "$file" 2>/dev/null | grep -v "^[[:space:]]*#" | grep -v "^[[:space:]]*//" | head -5 || true)
+      else
+        matches=$(grep -n "$imp" "$file" 2>/dev/null | grep -v "^[[:space:]]*#" | grep -v "^[[:space:]]*//" | head -5 || true)
+      fi
       [ -z "$matches" ] && continue
       while IFS= read -r match; do
         local line_num=$(echo "$match" | cut -d: -f1)
@@ -112,6 +123,7 @@ while IFS= read -r line; do
     current_imports=()
     current_patterns=()
     current_reason=""
+    current_match_mode=""
     continue
   fi
 
@@ -123,6 +135,7 @@ while IFS= read -r line; do
     current_imports=()
     current_patterns=()
     current_reason=""
+    current_match_mode=""
     in_rule=true
     continue
   fi
@@ -135,6 +148,15 @@ while IFS= read -r line; do
       for imp in "${imports_arr[@]}"; do
         current_imports+=("$(echo "$imp" | tr -d ' ')")
       done
+      continue
+    fi
+
+    # Parse optional match_mode (default: substring, matches anywhere in the
+    # line — needed for call-pattern rules like "os.system"/"cursor.execute".
+    # "import": only match real import/require statements — for rules whose
+    # cannot_import entries are actual module specifiers, e.g. JS/TS "fs").
+    if [[ "$line" =~ match_mode: ]]; then
+      current_match_mode=$(echo "$line" | sed 's/.*match_mode:[[:space:]]*"\(.*\)"/\1/' | tr -d '"')
       continue
     fi
 
