@@ -16,16 +16,65 @@
 #   decision: 채택한 결정
 #   consequence: 이 결정의 결과와 후속 영향
 
-# ─── Example ADR (프로젝트에 맞게 수정하세요) ──────────────────────────
-
 - id: ADR-001
-  title: "[Example] API 응답 형식 통일"
+  title: "구글 계정 자동 연결(동일 이메일)은 직접 구현하지 않고 Supabase Auth(GoTrue)에 위임한다"
   status: adopted
-  date: 2026-01-01
-  stacks: [all]
+  date: 2026-09-13
+  stacks: [nextjs]
   context: |
-    [TODO: 어떤 문제가 있었는지 구체적으로 서술하세요]
-    예시: 프론트엔드 클라이언트가 각각 다른 API 응답 형식을 파싱하고 있었다.
-    신규 API를 추가할 때마다 클라이언트별 파싱 로직을 별도로 작성해야 했다.
-  decision: "[TODO: 어떤 결정을 내렸는지]"
-  consequence: "[TODO: 이 결정의 결과]"
+    seed-v2 AC-003은 "동일 이메일의 기존 계정이 있으면 구글 이메일이 verified인
+    경우에만 자동 연결되고, 아니면 거부된다"를 요구했다. 처음엔 "이메일로 기존
+    계정을 조회해서 우리가 직접 연결 처리를 한다"는 구현을 가정했는데, 리서치
+    (context7 + Supabase 공식 문서, docs/google-oauth-setup.md 작성 과정에서 확인)
+    결과 Supabase Auth가 exchangeCodeForSession() 호출 안에서 이 자동연결을
+    이미 자체적으로 수행한다는 걸 알게 됐다 — 우리가 "연결하라"는 API를 따로
+    부르지 않는다. 문제는 GoTrue가 연결에 실패해도 에러를 던지지 않고 조용히
+    별개의 auth.users 행을 만들어버린다는 점(공식 문서에 이 실패 케이스의 에러
+    형태가 문서화돼 있지 않음)이었다.
+
+    이후 독립 Test Designer(구현 코드를 안 보고 seed spec만으로 테스트를 설계)가
+    정반대 가정(구글이 반환하는 email_confirmed_at 필드를 우리 코드가 직접
+    검사해서 거부 여부를 판정한다)으로 테스트를 설계해왔다 — AC 문구가 결과만
+    명시하고 "누가 그 판정을 하는가"는 명시하지 않아서 생긴 해석 차이였다.
+  decision: |
+    자동 연결 판정 자체는 GoTrue에 완전히 위임한다. 우리 코드는 (1) 이미
+    public.users에 있는 id면 그대로 로그인 처리, (2) 없는데 이메일이 이미 다른
+    id로 쓰이고 있으면(=GoTrue가 연결에 실패해 별도 계정을 만든 것으로 추정)
+    명시적으로 거부, (3) 그마저도 놓친 경우를 대비해 public.users.email UNIQUE
+    제약 위반(DuplicateEmailError)을 최종 안전망으로 둔다. 거부 시엔 방금
+    생성된 auth.users를 admin으로 삭제하고, 이미 심긴 세션 쿠키도 signOut()으로
+    명시적으로 무효화한다(exchangeCodeForSession이 성공하는 즉시 쿠키부터
+    심기 때문 — Navigator 리뷰로 발견).
+  consequence: |
+    장점: "verified 여부 판정" 로직을 우리가 재구현할 필요가 없어 버그 표면적이
+    작다. 단점: 이 위임이 실제로 의도대로 동작하는지는 문서 근거로만 확인했고,
+    실제 미인증(unverified) 구글 테스트 계정으로 거부되는 것을 실물로 확인하지
+    못했다(.harness/ouroboros/tasks/seed-v2-decomposition.yaml의
+    manual_verification_checklist 참고 — Google Cloud Console 자격증명
+    발급 후 필수로 확인해야 함). 향후 seed를 쓸 때 이런 "외부 라이브러리가
+    내장 기능으로 처리하는 로직"에 의존하기로 한 경우, seed의 tech_decisions나
+    constraints에 그 사실을 명시해두면 Test Designer 같은 독립 검증 주체가
+    같은 전제로 설계할 수 있다.
+
+- id: ADR-002
+  title: "로컬 Supabase(Docker) 기반 E2E 스위트는 Playwright 워커 수를 낮게 고정한다"
+  status: adopted
+  date: 2026-09-14
+  stacks: [nextjs]
+  context: |
+    seed-v2로 E2E 스펙 파일이 5개(17개 테스트)로 늘어난 뒤, `npm run test:e2e`
+    전체 실행이 간헐적으로 실패했다(회원가입 후 /signup에 그대로 머묾, 로그아웃
+    후 뒤로가기 등). 단독 파일 실행은 항상 통과했고, `--workers=1`로 전체를
+    돌리면 100% 통과, 기본 워커 수(이 머신 CPU 코어 수인 4)에서만 재현 가능하게
+    실패했다 — 코드 버그가 아니라 로컬 Supabase Docker 스택(단일 Postgres/GoTrue
+    컨테이너)이 여러 워커의 동시 signup/signin 폭주를 못 견기는 리소스 경합으로
+    확인됐다(/evaluate 중 발견).
+  decision: |
+    playwright.config.ts에 workers: 2를 명시 고정한다(코드 근거 주석 포함).
+    supabase/config.toml의 auth.rate_limit.sign_in_sign_ups도 기본 30에서
+    300으로 올린다(로컬 전용 설정, 운영 배포엔 적용 안 됨).
+  consequence: |
+    워커 2개는 이 프로젝트 규모에서 직렬(workers:1)보다 빠르면서도 로컬 스택이
+    감당 가능한 수준으로 실측 확인됨(연속 2회 17/17 안정). E2E 스위트가 더
+    커지면 이 값을 재검토해야 하고, 그땐 로컬 Supabase 리소스 할당(Docker
+    Desktop/OrbStack CPU·메모리) 상향도 함께 고려해야 한다.
