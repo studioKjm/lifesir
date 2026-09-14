@@ -33,15 +33,13 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
 
   return (
     <AppShell active="dashboard" user={session}>
-      <h1 style={{ fontSize: 24, fontWeight: 900, marginBottom: 6 }}>내 건강 대시보드</h1>
-      <p style={{ color: "var(--ink-muted)", fontSize: 14, marginBottom: 20 }}>
-        오늘 하루의 기록을 남기고 흐름을 확인하세요.
-      </p>
+      <h1 className="page-title">내 건강 대시보드</h1>
+      <p className="page-subtitle">오늘 하루의 기록을 남기고 흐름을 확인하세요.</p>
 
       {!session.agentPersonaId && <OnboardingBanner />}
 
       {errorCode && (
-        <div role="alert" style={{ marginBottom: 16 }}>
+        <div role="alert">
           <p>{ERROR_COPY[errorCode] ?? "알 수 없는 오류가 발생했어요."}</p>
         </div>
       )}
@@ -50,11 +48,11 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
 
       <div className={styles.layout}>
         <div className="card">
-          <h2 style={{ fontSize: 15, fontWeight: 800, marginBottom: 14 }}>최근 기록</h2>
+          <h2 className="section-title">최근 기록</h2>
           {view.entries.length === 0 ? (
             <EmptyState variant="empty" />
           ) : (
-            <table className={styles.entryTable}>
+            <table className="data-table">
               <thead>
                 <tr>
                   <th>시각</th>
@@ -68,11 +66,11 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
                   <tr key={entry.id}>
                     <td>{new Date(entry.loggedAt).toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short" })}</td>
                     <td>{LABELS[entry.logType]}</td>
-                    <td className={styles.entryValue}>
+                    <td className="data-table__value">
                       {entry.value}
                       {entry.unit ?? ""}
                     </td>
-                    <td className={styles.entryNote}>{entry.note ?? "—"}</td>
+                    <td className="data-table__note">{entry.note ?? "—"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -81,7 +79,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         </div>
 
         <div className={`card ${styles.formCard}`}>
-          <h2 style={{ fontSize: 15, fontWeight: 800, marginBottom: 14 }}>기록 추가</h2>
+          <h2 className="section-title">기록 추가</h2>
           <HealthLogForm />
         </div>
       </div>

@@ -10,6 +10,45 @@
   padding: 16px 14px;
 }
 
+.icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 10px;
+}
+
+.icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.icon--blue {
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+
+.icon--green {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.icon--amber {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.icon--red {
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.icon--violet {
+  background: var(--violet-soft);
+  color: var(--violet);
+}
+
 .label {
   font-size: 12.5px;
   font-weight: 700;

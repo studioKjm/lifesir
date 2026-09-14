@@ -40,3 +40,17 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* 전역 [role="alert"] 배너 스타일(배경/패딩/flex 박스)과 우선순위가 같아
+   그대로 두면 로드 순서에 따라 충돌할 수 있다 — 태그+role+class로 명시적으로
+   더 높여서 이 문구는 항상 버튼 아래의 작은 텍스트로만 보이게 한다. */
+p.error[role="alert"] {
+  display: block;
+  background: none;
+  padding: 0;
+  color: var(--red);
+  font-size: 13px;
+  margin-top: 10px;
+  margin-bottom: 0;
+  text-align: center;
+}

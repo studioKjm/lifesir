@@ -88,3 +88,28 @@
 .main {
   padding: 40px 0 80px;
 }
+
+@media (max-width: 720px) {
+  .bar {
+    gap: 16px;
+    height: 56px;
+  }
+
+  .nav {
+    gap: 0;
+  }
+
+  .navLink {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  .userName {
+    display: none;
+  }
+
+  .main {
+    padding: 24px 0 56px;
+  }
+}
+

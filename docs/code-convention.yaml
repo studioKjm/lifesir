@@ -147,6 +147,25 @@ nextjs:
       사전 발견). NEXT-005의 "캐싱된 클라이언트에서 세션 메서드 금지"와 짝을
       이루는 규칙 — 이쪽은 "부수효과 발생 시점"과 "거부 판정 시점"의 순서 문제다.
     stacks: [nextjs]
+  - id: NEXT-007
+    rule: >
+      Route Handler에서 NextResponse.redirect(new URL(path, request.url))로
+      절대 URL 리다이렉트를 만들 때, request.url의 origin을 무조건 신뢰하지
+      않는다 — Next.js 16 dev 서버(Turbopack)는 실제 요청 Host 헤더(127.0.0.1
+      등)와 무관하게 request.url의 origin을 "localhost:<port>"로 고정해버린다
+      (curl로 Host를 바꿔 보내도 Location이 항상 localhost로 나오는 것으로
+      실측 확인, 2026-09-14 lifesir seed-v2 실사용 검증 중 발견). 이 상태로
+      OAuth 콜백처럼 "세션 쿠키가 심긴 host"와 "다음 리다이렉트가 가는 host"가
+      달라지면, 쿠키가 다른 origin이라 전달되지 않아 로그인이 화면상 조용히
+      실패한다(구글 로그인 성공 → /dashboard로 302는 뜨는데 세션이 없어
+      proxy.ts가 다시 /login으로 튕김). 대신 request.headers.get("host")
+      (프록시 뒤라면 x-forwarded-host 우선)로 origin을 직접 만들어 쓴다 —
+      proxy.ts(미들웨어)는 이 문제가 없었다(상대 경로 "/login"으로 리다이렉트를
+      내보내 브라우저가 실제 origin 기준으로 해석함, 실측 확인). 이 버그 클래스는
+      /evaluate의 자동 E2E로는 못 잡는다 — Playwright가 host가 바뀌어도 그냥
+      따라가버리기 때문에, 실제 다른 host(127.0.0.1 등)로 접속해 쿠키 지속
+      여부까지 확인하는 수동 검증에서만 드러난다.
+    stacks: [nextjs]
 
 nestjs:
   - id: NEST-001

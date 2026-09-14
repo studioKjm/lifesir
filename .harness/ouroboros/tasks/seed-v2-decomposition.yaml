@@ -179,3 +179,27 @@ manual_verification_checklist:
 # "이번 /run 완료를 프로덕션 준비 완료로 간주하면 안 된다 — 실제 Google Cloud
 # Console 자격증명으로 위 항목들을 사람이 확인하기 전까지는 AC-003/AC-007이
 # 완전히 종결됐다고 보기 어렵다."
+#
+# 2026-09-14 — 1번 항목 실사용 검증 중 실제 버그 발견: 구글 로그인이 화면상
+# "로그인 안 됨"으로 조용히 실패했다(예외/에러 파라미터 없이 그냥 /login으로
+# 돌아옴). 근본 원인은 코드가 아니라 Next.js 16 dev 서버(Turbopack)가
+# src/app/auth/callback/route.ts의 `new URL(path, request.url)` 리다이렉트에서
+# origin을 실제 요청 host(127.0.0.1)와 무관하게 "localhost"로 고정해버리는
+# 것 — 세션 쿠키가 심긴 host와 다음 리다이렉트가 가는 host가 달라져 쿠키가
+# 전달되지 않았다. src/app/auth/callback/route.ts를 request.headers.get("host")
+# 기반으로 origin을 만들도록 수정, 127.0.0.1로 재검증(구글 계정 hello@pysirlabs.com
+# 으로 로그인→콘센트→/dashboard 정상 진입, Labs PySir님으로 렌더링 확인) —
+# 1번 항목 PASS로 전환. 2/3/4번은 여전히 미수행(각각 이메일/구글 계정 자동연결,
+# unverified 이메일 거부, 동의화면 취소는 별도 시나리오라 이번 확인으로 커버 안 됨).
+# 컨벤션으로 일반화: docs/code-convention.yaml NEXT-007.
+manual_verification_status:
+  - item: 1
+    status: "PASS (2026-09-14, 127.0.0.1로 실제 검증, 버그 발견·수정 후 재확인)"
+  - item: 2
+    status: "미수행"
+  - item: 3
+    status: "미수행"
+  - item: 4
+    status: "자동 E2E로 커버됨(tests/e2e/oauth-flow.spec.ts) — 실제 동의화면 취소는 여전히 미수행"
+  - item: 5
+    status: "미수행"

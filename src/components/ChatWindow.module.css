@@ -61,4 +61,18 @@
 
 .composer input {
   flex: 1;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 14px;
+}
+
+.composer input:focus {
+  border-color: var(--blue);
+  outline: none;
+}
+
+.composer input:disabled {
+  opacity: 0.6;
 }

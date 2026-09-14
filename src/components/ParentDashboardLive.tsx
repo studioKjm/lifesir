@@ -61,16 +61,16 @@ export function ParentDashboardLive({ careLinkId, initialView }: ParentDashboard
         15초마다 자동 갱신
       </span>
 
-      <div style={{ marginTop: 14 }}>
+      <div className={styles.chartSpacer}>
         <DashboardChart summaryByType={view.summaryByType} />
       </div>
 
       {view.entries.length === 0 ? (
-        <div style={{ marginTop: 16 }}>
+        <div className={styles.emptySpacer}>
           <EmptyState variant="empty" description="아직 기록이 없어요." />
         </div>
       ) : (
-        <table className={styles.table}>
+        <table className={`data-table ${styles.table}`}>
           <thead>
             <tr>
               <th>시각</th>
@@ -84,11 +84,11 @@ export function ParentDashboardLive({ careLinkId, initialView }: ParentDashboard
               <tr key={entry.id}>
                 <td>{new Date(entry.loggedAt).toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short" })}</td>
                 <td>{LABELS[entry.logType]}</td>
-                <td className={styles.value}>
+                <td className="data-table__value">
                   {entry.value}
                   {entry.unit ?? ""}
                 </td>
-                <td style={{ color: "var(--ink-muted)", fontSize: 12 }}>{entry.note ?? "—"}</td>
+                <td className="data-table__note">{entry.note ?? "—"}</td>
               </tr>
             ))}
           </tbody>

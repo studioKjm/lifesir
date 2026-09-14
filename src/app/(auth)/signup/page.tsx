@@ -16,18 +16,20 @@ export default async function SignUpPage({ searchParams }: PageProps<"/signup">)
 
   return (
     <div className="card">
-      <h1 style={{ fontSize: 22, fontWeight: 900, marginBottom: 6 }}>회원가입</h1>
-      <p style={{ color: "var(--ink-muted)", fontSize: 14, marginBottom: 24 }}>
+      <h1 className="page-title" style={{ fontSize: 22 }}>
+        회원가입
+      </h1>
+      <p className="page-subtitle" style={{ marginBottom: 24 }}>
         생년월일에 맞춰 AI 코치의 말투가 달라져요.
       </p>
 
       {errorCode && (
-        <div role="alert" style={{ marginBottom: 16 }}>
+        <div role="alert">
           <p>{ERROR_COPY[errorCode] ?? "알 수 없는 오류가 발생했어요."}</p>
         </div>
       )}
 
-      <form action={signUpAction} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <form action={signUpAction} className="form-stack">
         <div className="field">
           <label htmlFor="name">이름</label>
           <input id="name" name="name" type="text" autoComplete="name" required />
@@ -49,8 +51,8 @@ export default async function SignUpPage({ searchParams }: PageProps<"/signup">)
         </button>
       </form>
 
-      <p style={{ textAlign: "center", fontSize: 13, color: "var(--ink-muted)", marginTop: 20 }}>
-        이미 계정이 있으신가요? <Link href="/login" style={{ color: "var(--blue)", fontWeight: 700 }}>로그인</Link>
+      <p className="auth-footer">
+        이미 계정이 있으신가요? <Link href="/login">로그인</Link>
       </p>
     </div>
   );

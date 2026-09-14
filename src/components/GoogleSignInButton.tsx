@@ -58,7 +58,7 @@ export function GoogleSignInButton() {
         {pending ? "이동 중..." : "Google로 계속하기"}
       </button>
       {error && (
-        <p role="alert" style={{ color: "var(--red)", fontSize: 13, marginTop: 10, textAlign: "center" }}>
+        <p role="alert" className={styles.error}>
           {error}
         </p>
       )}

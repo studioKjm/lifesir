@@ -1,0 +1,9 @@
+.liveCard {
+  margin-bottom: 24px;
+}
+
+.formHint {
+  color: var(--ink-muted);
+  font-size: 13px;
+  margin-bottom: 14px;
+}

@@ -7,6 +7,7 @@ import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { ParentDashboardLive } from "@/components/ParentDashboardLive";
 import { HealthLogForm } from "@/components/HealthLogForm";
+import styles from "./parent-dashboard.module.css";
 
 export const metadata = { title: "가족 대시보드 — 동행" };
 
@@ -48,26 +49,22 @@ export default async function ParentDashboardPage({
 
   return (
     <AppShell active="care-links" user={session}>
-      <h1 style={{ fontSize: 24, fontWeight: 900, marginBottom: 6 }}>{counterpartName}님의 건강 대시보드</h1>
-      <p style={{ color: "var(--ink-muted)", fontSize: 14, marginBottom: 20 }}>
-        기록 열람은 읽기 전용이에요. 대신 기록은 아래에서 남길 수 있어요.
-      </p>
+      <h1 className="page-title">{counterpartName}님의 건강 대시보드</h1>
+      <p className="page-subtitle">기록 열람은 읽기 전용이에요. 대신 기록은 아래에서 남길 수 있어요.</p>
 
       {errorCode && (
-        <div role="alert" style={{ marginBottom: 16 }}>
+        <div role="alert">
           <p>{ERROR_COPY[errorCode] ?? "알 수 없는 오류가 발생했어요."}</p>
         </div>
       )}
 
-      <div className="card" style={{ marginBottom: 24 }}>
+      <div className={`card ${styles.liveCard}`}>
         <ParentDashboardLive careLinkId={careLinkId} initialView={view} />
       </div>
 
       <div className="card">
-        <h2 style={{ fontSize: 15, fontWeight: 800, marginBottom: 4 }}>{counterpartName}님 대신 기록하기</h2>
-        <p style={{ color: "var(--ink-muted)", fontSize: 13, marginBottom: 14 }}>
-          연결이 수락된 동안에만 대신 기록할 수 있어요.
-        </p>
+        <h2 className="section-title">{counterpartName}님 대신 기록하기</h2>
+        <p className={styles.formHint}>연결이 수락된 동안에만 대신 기록할 수 있어요.</p>
         <HealthLogForm targetUserId={link.targetUserId} careLinkId={careLinkId} />
       </div>
     </AppShell>

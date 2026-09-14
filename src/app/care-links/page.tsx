@@ -5,6 +5,7 @@ import { AppShell } from "@/components/AppShell";
 import { CareLinkRequestCard } from "@/components/CareLinkRequestCard";
 import { EmptyState } from "@/components/EmptyState";
 import { requestCareLinkAction } from "./actions";
+import styles from "./care-links.module.css";
 
 export const metadata = { title: "케어링크 — 동행" };
 
@@ -31,22 +32,22 @@ export default async function CareLinksPage({ searchParams }: PageProps<"/care-l
 
   return (
     <AppShell active="care-links" user={session}>
-      <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 900, marginBottom: 6 }}>케어링크</h1>
-        <p style={{ color: "var(--ink-muted)", fontSize: 14 }}>
+      <div className={styles.head}>
+        <h1 className="page-title">케어링크</h1>
+        <p className="page-subtitle" style={{ marginBottom: 0 }}>
           가족의 이메일로 연결을 요청하고, 상대가 수락하면 건강 기록을 확인할 수 있어요.
         </p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 24, alignItems: "start" }}>
+      <div className={styles.layout}>
         <div className="card">
-          <h2 style={{ fontSize: 15, fontWeight: 800, marginBottom: 14 }}>새 연결 요청</h2>
+          <h2 className="section-title">새 연결 요청</h2>
           {errorCode && (
-            <div role="alert" style={{ marginBottom: 14 }}>
+            <div role="alert">
               <p>{ERROR_COPY[errorCode] ?? "알 수 없는 오류가 발생했어요."}</p>
             </div>
           )}
-          <form action={requestCareLinkAction} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <form action={requestCareLinkAction} className="form-stack">
             <div className="field">
               <label htmlFor="targetEmail">상대방 이메일</label>
               <input id="targetEmail" name="targetEmail" type="email" placeholder="parent@example.com" required />
@@ -57,9 +58,9 @@ export default async function CareLinksPage({ searchParams }: PageProps<"/care-l
           </form>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+        <div className={styles.lists}>
           <section className="card">
-            <h2 style={{ fontSize: 15, fontWeight: 800, marginBottom: 4 }}>받은 요청</h2>
+            <h2 className={styles.sectionTitle}>받은 요청</h2>
             {received.length === 0 ? (
               <EmptyState variant="empty" description="아직 받은 연결 요청이 없어요." />
             ) : (
@@ -68,7 +69,7 @@ export default async function CareLinksPage({ searchParams }: PageProps<"/care-l
           </section>
 
           <section className="card">
-            <h2 style={{ fontSize: 15, fontWeight: 800, marginBottom: 4 }}>내가 보낸 요청</h2>
+            <h2 className={styles.sectionTitle}>내가 보낸 요청</h2>
             {sent.length === 0 ? (
               <EmptyState variant="empty" description="아직 보낸 연결 요청이 없어요." />
             ) : (

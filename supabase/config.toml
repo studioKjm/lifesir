@@ -343,7 +343,7 @@ email_optional = false
 # (docs/TRD.md 참고) → .env.local의 SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID/SECRET에
 # 채운 뒤 enabled를 true로 바꾸고 `supabase stop && supabase start`로 재기동한다.
 [auth.external.google]
-enabled = false
+enabled = true
 client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
 secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
 redirect_uri = ""

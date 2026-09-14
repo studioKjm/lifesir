@@ -20,6 +20,8 @@
   --amber-soft: oklch(93% 0.04 80);
   --red: oklch(58% 0.2 25);
   --red-soft: oklch(93% 0.05 25);
+  --violet: oklch(56% 0.17 300);
+  --violet-soft: oklch(93% 0.035 300);
 
   --radius-lg: 20px;
   --radius-md: 14px;
@@ -40,6 +42,7 @@
     --green-soft: oklch(28% 0.05 150);
     --amber-soft: oklch(28% 0.05 80);
     --red-soft: oklch(30% 0.06 25);
+    --violet-soft: oklch(30% 0.06 300);
     --shadow-card: 0 1px 2px oklch(0% 0 0 / 0.3), 0 8px 24px oklch(0% 0 0 / 0.35);
     color-scheme: dark;
   }
@@ -205,6 +208,68 @@ textarea {
   min-height: 72px;
 }
 
+/* 네이티브 date/datetime-local의 달력 아이콘·팝업 색을 현재 테마에 맞춘다
+   (그 외 팝업 내부는 브라우저가 그려 CSS로 못 건드린다 — accent-color가 최선). */
+.field input[type="date"],
+.field input[type="datetime-local"] {
+  accent-color: var(--blue);
+}
+
+/* ─── 타이포그래피 (페이지마다 흩어져 있던 인라인 style 통일) ────── */
+
+.page-title {
+  font-size: 24px;
+  font-weight: 900;
+  margin-bottom: 6px;
+}
+
+.page-subtitle {
+  color: var(--ink-muted);
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.section-title {
+  font-size: 15px;
+  font-weight: 800;
+  margin-bottom: 14px;
+}
+
+/* ─── 폼 스택 (form action의 세로 배치 반복 제거) ─────────────────── */
+
+.form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ─── 화면 중앙 단일 카드 레이아웃 (로그인 등 (auth) 밖에서도 재사용) ── */
+
+.center-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+}
+
+.center-screen__panel {
+  width: 100%;
+  max-width: 400px;
+}
+
+.auth-footer {
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-muted);
+  margin-top: 20px;
+}
+
+.auth-footer a {
+  color: var(--blue);
+  font-weight: 700;
+}
+
 /* ─── 뱃지 / 필 ───────────────────────────────────────────────── */
 
 .badge {
@@ -229,6 +294,43 @@ textarea {
 .badge--muted {
   background: var(--surface-2);
   color: var(--ink-muted);
+}
+
+/* ─── 데이터 테이블 (본인/부모 대시보드가 거의 동일한 표를 각자 구현하던 것 통일) ── */
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.data-table th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-muted);
+  padding: 0 0 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.data-table td {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table__value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.data-table__note {
+  color: var(--ink-muted);
+  font-size: 12px;
 }
 
 /* ─── 안내 컴포넌트 (EmptyState / ErrorBanner 공용 스타일) ───────── */
@@ -257,6 +359,7 @@ textarea {
   color: var(--red);
   border-radius: var(--radius-md);
   padding: 14px 16px;
+  margin-bottom: 16px;
   font-size: 13px;
   font-weight: 600;
 }
