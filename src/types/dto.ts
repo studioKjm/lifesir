@@ -88,6 +88,15 @@ export interface ChatMessageInput {
   content: string;
 }
 
+// seed-v2 — @supabase/ssr 쿠키 어댑터. Presentation(Server Action/Route
+// Handler/proxy.ts)이 next/headers의 cookies()나 request/response로 실제
+// 구현체를 만들어 Logic→Data로 넘긴다. Data 레이어(src/lib/data)는 next/*를
+// import할 수 없으므로(boundaries.yaml), 이 얕은 계약을 통해서만 쿠키를 다룬다.
+export interface SupabaseCookieAdapter {
+  getAll(): { name: string; value: string }[];
+  setAll(cookies: { name: string; value: string; options?: Record<string, unknown> }[]): void;
+}
+
 export interface MessageDTO {
   id: string;
   conversationId: string;

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/app/_lib/session";
 import { AppShell } from "@/components/AppShell";
 import { ChatWindow } from "@/components/ChatWindow";
+import { OnboardingBanner } from "@/components/OnboardingBanner";
 
 export const metadata = { title: "AI 상담 — 동행" };
 
@@ -15,6 +16,8 @@ export default async function ChatPage() {
       <p style={{ color: "var(--ink-muted)", fontSize: 14, marginBottom: 20 }}>
         연령대에 맞춰 다르게 답하는 AI 코치가 최근 건강 기록을 참고해 답변해요.
       </p>
+
+      {!session.agentPersonaId && <OnboardingBanner />}
 
       <div className="card" style={{ maxWidth: 720 }}>
         <ChatWindow />

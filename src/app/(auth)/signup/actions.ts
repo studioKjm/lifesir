@@ -4,7 +4,7 @@
 // auth-service(Logic)에 있다.
 import { redirect } from "next/navigation";
 import * as authService from "@/services/auth-service";
-import { setSessionCookie } from "@/app/_lib/session";
+import { buildCookieAdapter } from "@/app/_lib/session";
 
 export async function signUpAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
@@ -19,9 +19,9 @@ export async function signUpAction(formData: FormData) {
     redirect("/signup?error=WEAK_PASSWORD");
   }
 
-  let result;
   try {
-    result = await authService.signUp({ email, password, name, birthDate });
+    // Server Action 컨텍스트에서 만든 어댑터라 signUp이 세션 쿠키를 실제로 심을 수 있다.
+    await authService.signUp({ email, password, name, birthDate }, await buildCookieAdapter());
   } catch (err) {
     if (err instanceof authService.AuthError) {
       redirect(`/signup?error=${err.code}`);
@@ -29,6 +29,5 @@ export async function signUpAction(formData: FormData) {
     throw err;
   }
 
-  await setSessionCookie(result.session);
   redirect("/dashboard");
 }

@@ -1,11 +1,16 @@
 import Link from "next/link";
 import { signInAction } from "./actions";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 
 export const metadata = { title: "로그인 — 동행" };
 
 const ERROR_COPY: Record<string, string> = {
   INVALID_INPUT: "이메일과 비밀번호를 입력해주세요.",
   INVALID_CREDENTIALS: "이메일 또는 비밀번호가 올바르지 않아요.",
+  // seed-v2 AC-007 — 구글 동의화면 취소/실패
+  OAUTH_CANCELLED: "구글 로그인이 취소됐어요.",
+  OAUTH_EXCHANGE_FAILED: "구글 로그인에 실패했어요. 잠시 후 다시 시도해주세요.",
+  OAUTH_EMAIL_NOT_VERIFIED: "이 구글 계정의 이메일이 인증되지 않아 기존 계정과 연결할 수 없어요.",
 };
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
@@ -36,6 +41,8 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           로그인
         </button>
       </form>
+
+      <GoogleSignInButton />
 
       <p style={{ textAlign: "center", fontSize: 13, color: "var(--ink-muted)", marginTop: 20 }}>
         아직 계정이 없으신가요? <Link href="/signup" style={{ color: "var(--blue)", fontWeight: 700 }}>회원가입</Link>

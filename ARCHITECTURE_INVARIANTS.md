@@ -37,10 +37,12 @@
 
 | From | Cannot Import | Reason |
 |------|--------------|--------|
-| `src/app` (페이지 + `api/` Route Handler/Server Action) | `@/lib/data`, `@/lib/llm`, `@supabase/supabase-js`, `prisma` | Presentation은 Data를 직접 호출하지 않는다. `src/services`를 경유한다 |
-| `src/components` | `@/lib/data`, `@/lib/llm`, `@supabase/supabase-js`, `prisma` | 위와 동일 (컴포넌트도 Presentation) |
+| `src/app` (페이지 + `api/` Route Handler/Server Action) | `@/lib/data`, `@/lib/llm`, `@supabase/supabase-js`, `@supabase/ssr`, `prisma` | Presentation은 Data를 직접 호출하지 않는다. `src/services`를 경유한다 |
+| `src/components` | `@/lib/data`, `@/lib/llm`, `@supabase/supabase-js`, `@supabase/ssr`, `prisma` | 위와 동일 (컴포넌트도 Presentation). 구글 로그인 버튼처럼 브라우저에서 OAuth 리다이렉트를 시작해야 하는 경우는 `@/lib/supabase-browser`(anon key 전용, DB/서비스 롤 접근 없음)를 통해서만 한다 — 이 모듈은 Data 레이어가 아니라 Presentation 쪽 공개 유틸리티로 분류한다 (seed-v2) |
 | `src/services` | `react`, `next/*` | Logic은 Presentation 프레임워크에 의존하지 않는다 (프레임워크 독립성) |
 | `src/lib/data`, `src/lib/llm` | `react`, `next/*`, `@/app`, `@/components` | Data는 Presentation을 역참조하지 않는다 |
+
+> `src/proxy.ts`는 페이지도 서비스도 아닌 프레임워크 진입점(Next.js Proxy/Middleware)이라 위 표의 대상이 아니다. 세션 갱신을 위해 `@supabase/ssr`의 서버 클라이언트를 직접 만드는 것은 예외로 허용한다(Supabase 공식 패턴과 동일, T-018부터의 기존 관례) — 단, 여기서 만든 클라이언트로 DB 테이블을 조회/변경하지 않는다(세션 갱신 이외의 용도 금지).
 
 > 상세 규칙: `.harness/gates/rules/boundaries.yaml`
 

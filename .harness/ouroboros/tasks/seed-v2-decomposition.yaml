@@ -1,0 +1,181 @@
+# Task Decomposition — seed-v2
+# Source: .harness/ouroboros/seeds/seed-v2.yaml, docs/TRD.md (## 8~14)
+# Generated: 2026-09-13
+
+decomposition:
+  seed_ref: "seed-v2.yaml"
+  trd_ref: "docs/TRD.md#seed-v2"
+  total_tasks: 16
+  status: "done"   # pending | in_progress | done — /run이 진행하며 태스크별로 갱신
+
+  tasks:
+    # ─── Phase 1: Data 기반 (의존성 없음, 병렬 가능) ──────────────────
+    - id: "T-001"
+      status: "done"
+      ac_ref: "AC-004"
+      layer: "data"
+      description: "supabase/migrations/..._nullable_birth_date.sql — users.birth_date NOT NULL 제거"
+      test: "마이그레이션 적용 후 birth_date 없이 users 행 insert 성공하는지 통합 테스트"
+      depends_on: []
+      estimated_minutes: 10
+    - id: "T-002"
+      status: "done"
+      ac_ref: "AC-005"
+      layer: "data"
+      description: "src/lib/data/supabase-client.ts — createServerSupabaseClient() 추가. @supabase/ssr의 createServerClient, 쿠키 getAll/setAll 어댑터. 요청마다 새로 생성하며 캐싱하지 않는다(NEXT-005 컨벤션 — 캐싱하면 세션 유출 재발)"
+      test: "쿠키 어댑터가 getAll/setAll을 올바르게 위임하는지, 호출마다 새 인스턴스를 반환하는지(캐싱 없음) 단위 테스트"
+      depends_on: []
+      estimated_minutes: 25
+    - id: "T-003"
+      status: "done"
+      ac_ref: "AC-001"
+      layer: "data"
+      description: "src/lib/supabase-browser.ts(신규, Data 레이어 아님) — createBrowserSupabaseClient(). @supabase/ssr의 createBrowserClient, anon/publishable key만 사용"
+      test: "환경변수(NEXT_PUBLIC_SUPABASE_URL/ANON_KEY) 누락 시 명확한 에러를 던지는지 단위 테스트"
+      depends_on: []
+      estimated_minutes: 15
+
+    # ─── Phase 2: Data (T-001 의존) ────────────────────────────────
+    - id: "T-004"
+      status: "done"
+      ac_ref: "AC-004"
+      layer: "data"
+      description: "src/lib/data/user-repository.ts — CreateUserInput.birthDate를 optional로, updateProfile(id, {birthDate, agentPersonaId}) 추가"
+      test: "birthDate 없이 생성 성공 + updateProfile로 이후 birthDate/agentPersonaId 갱신되는지 통합 테스트"
+      depends_on: ["T-001"]
+      estimated_minutes: 20
+
+    # ─── Phase 3: Logic (1차 — Data 직접 의존) ────────────────────
+    - id: "T-005"
+      status: "done"
+      ac_ref: "AC-001"
+      layer: "logic"
+      description: "src/services/auth-service.ts — exchangeGoogleSession(code): T-002의 서버 클라이언트로 exchangeCodeForSession 호출, 성공 시 AuthResult DTO로 변환, 실패 시 AuthError(코드 만료 등)"
+      test: "정상 교환 성공 + 코드 만료/에러 응답 시 AuthError로 변환되는지 단위 테스트(mock)"
+      depends_on: ["T-002"]
+      estimated_minutes: 25
+    - id: "T-006"
+      status: "done"
+      ac_ref: "AC-005"
+      layer: "logic"
+      description: "src/services/auth-service.ts — getSessionUser() 재작성. 커스텀 액세스 토큰 인자 대신 T-002의 서버 클라이언트로 요청 쿠키에서 세션을 직접 읽는다. 반환 타입({id,email,name})은 기존과 동일하게 유지"
+      test: "유효 세션/무효 세션/세션 없음 3케이스 단위 테스트(mock)"
+      depends_on: ["T-002"]
+      estimated_minutes: 20
+    - id: "T-007"
+      status: "done"
+      ac_ref: "AC-002"
+      layer: "logic"
+      description: "src/services/auth-service.ts — signUp/signIn의 세션 쿠키 발급 부분을 T-002 기반 @supabase/ssr 쿠키 헬퍼로 교체(로직 자체는 무변경, 회귀 없음)"
+      test: "기존 signUp/signIn 단위 테스트 전부가 여전히 통과하는지 확인 + 세션 쿠키 발급 호출부 변경 검증"
+      depends_on: ["T-002"]
+      estimated_minutes: 15
+
+    # ─── Phase 4: Logic (2차 — Phase 1/3 의존) ────────────────────
+    - id: "T-008"
+      status: "done"
+      ac_ref: "AC-004"
+      layer: "logic"
+      description: "src/services/auth-service.ts — completeOnboarding(userId, birthDate): agent-persona-service.getPersonaForBirthDate(seed-v1) 재사용 + T-004의 updateProfile 호출"
+      test: "정상 매칭 + 이미 agentPersonaId가 있는 경우(재입력) 처리 단위 테스트"
+      depends_on: ["T-004"]
+      estimated_minutes: 20
+
+    # ─── Phase 5: Presentation 기반 (세션 게이트) ─────────────────
+    - id: "T-009"
+      status: "done"
+      ac_ref: "AC-005"
+      layer: "presentation"
+      description: "src/proxy.ts 재작성 — T-002의 서버 클라이언트로 세션을 읽고 필요 시 갱신(refresh). 쿠키 존재 여부만 보던 기존 로직(AUTH_COOKIE_NAME) 제거"
+      test: "세션 없음→로그인 리다이렉트, 만료 임박 세션→갱신 후 통과 Playwright 테스트"
+      depends_on: ["T-002"]
+      estimated_minutes: 25
+    - id: "T-010"
+      status: "done"
+      ac_ref: "AC-005"
+      layer: "presentation"
+      description: "src/app/_lib/session.ts 축소 — getSession()을 T-006 기반으로 재구현. AUTH_COOKIE_NAME 상수/커스텀 쿠키 read/write 코드 전부 제거. setSessionCookie/clearSessionCookie도 @supabase/ssr 방식으로 교체"
+      test: "getSession이 로그인/비로그인 상태를 올바르게 반환하는지, 기존 T-019 유닛 테스트가 새 구현 기준으로 갱신되어 통과하는지 확인"
+      depends_on: ["T-006", "T-009"]
+      estimated_minutes: 20
+
+    # ─── Phase 6: Presentation (병렬 가능) ─────────────────────────
+    - id: "T-011"
+      status: "done"
+      ac_ref: "AC-001"
+      layer: "presentation"
+      description: "src/components/GoogleSignInButton.tsx(신규, client component) + app/(auth)/login/page.tsx에 버튼 추가. T-003의 브라우저 클라이언트로 signInWithOAuth() 호출"
+      test: "버튼 클릭 시 구글 리다이렉트 URL로 navigation이 시작되는지 Playwright 테스트(실제 구글 화면 진입 전까지만 자동 확인)"
+      depends_on: ["T-003"]
+      estimated_minutes: 20
+    - id: "T-012"
+      status: "done"
+      ac_ref: "AC-001, AC-003, AC-007"
+      layer: "presentation"
+      description: "app/auth/callback/route.ts(신규) — T-005 exchangeGoogleSession 호출. 성공 시 T-010의 세션 쿠키가 심긴 채로 리다이렉트, 실패/취소 시 에러 메시지와 함께 /login으로 리다이렉트(AC-007)"
+      test: "가짜 인가 코드로 성공/실패 경로 E2E 테스트. code 파라미터 없음(취소) 시나리오 포함"
+      depends_on: ["T-005", "T-010"]
+      estimated_minutes: 25
+    - id: "T-013"
+      status: "done"
+      ac_ref: "AC-004"
+      layer: "presentation"
+      description: "app/onboarding/page.tsx, actions.ts(신규) — 생년월일 입력 폼 + Server Action(T-008 호출)"
+      test: "생년월일 제출 후 대시보드로 리다이렉트 + AgentPersona 매칭 확인 Playwright 테스트"
+      depends_on: ["T-008", "T-010"]
+      estimated_minutes: 20
+    - id: "T-014"
+      status: "done"
+      ac_ref: "AC-004"
+      layer: "presentation"
+      description: "src/components/OnboardingBanner.tsx(신규) — AgentPersona 미매칭 사용자에게 대시보드/채팅 페이지 상단에 노출되는 소프트 유도 배너(강제 리다이렉트 아님). AppShell 또는 각 페이지에 조건부 렌더링"
+      test: "agentPersonaId=null 사용자에게 배너 노출, 있으면 미노출 되는지 스냅샷/Playwright 테스트"
+      depends_on: ["T-013"]
+      estimated_minutes: 15
+    - id: "T-015"
+      status: "done"
+      ac_ref: "AC-006"
+      layer: "presentation"
+      description: "src/app/_lib/auth-actions.ts의 logoutAction을 T-010 기반 @supabase/ssr 세션 무효화 방식으로 갱신 — 이메일/구글 로그인 사용자 모두 동일하게 동작하는지 확인"
+      test: "이메일 로그인 사용자 로그아웃 + 구글 로그인 사용자(가짜 세션) 로그아웃 둘 다 보호된 라우트 재접근 시 /login으로 돌아가는지 Playwright 테스트"
+      depends_on: ["T-010"]
+      estimated_minutes: 15
+
+    # ─── Phase 7: 전체 통합 검증 ────────────────────────────────────
+    - id: "T-016"
+      status: "done"
+      ac_ref: "AC-002, AC-005, AC-006, AC-007"
+      layer: "presentation"
+      description: "tests/e2e/oauth-flow.spec.ts(신규) — 기존 이메일 로그인 회귀 확인(AC-002) + 콜백 성공/실패(AC-001,003,007, 가짜 코드) + 온보딩(AC-004) + 로그아웃(AC-006) 전체 플로우. 실제 구글 동의화면 클릭은 이 테스트 범위 밖 — 별도 수동 체크리스트로 문서화(AC-001, AC-003의 '진짜 verified 이메일 자동 연결'은 사람이 실제 구글 계정으로 1회 확인)"
+      test: "AC-002/004/005/006/007 자동 검증. AC-001/003의 실제 구글 동의화면 경유는 README 또는 TRD에 수동 체크리스트로 명시"
+      depends_on: ["T-011", "T-012", "T-013", "T-014", "T-015"]
+      estimated_minutes: 30
+
+  execution_order:
+    - phase: 1
+      tasks: ["T-001", "T-002", "T-003"]
+    - phase: 2
+      tasks: ["T-004"]
+    - phase: 3
+      tasks: ["T-005", "T-006", "T-007"]
+    - phase: 4
+      tasks: ["T-008"]
+    - phase: 5
+      tasks: ["T-009", "T-010"]
+    - phase: 6
+      tasks: ["T-011", "T-012", "T-013", "T-014", "T-015"]
+    - phase: 7
+      tasks: ["T-016"]
+
+manual_verification_checklist:
+  # 자동화 대상 밖 — seed-v2 non_goals("구글 동의화면 자체를 포함한 완전 자동 E2E" 제외)
+  - "실제 구글 계정으로 '구글로 계속하기' 클릭 → 동의화면 → 콜백 → 대시보드 진입까지 1회 수동 확인"
+  - "이미 이메일/비밀번호로 가입된 계정과 동일한 이메일의 실제 구글 계정으로 로그인 → 자동 연결되어 같은 계정으로 들어가는지 확인"
+  - "구글 이메일이 verified가 아닌 테스트 계정(가능하다면)으로 시도 시 연결이 거부되는지 확인"
+  - "구글 동의화면에서 '취소'를 눌렀을 때 에러 없이 로그인 페이지로 안내되는지 확인(AC-007)"
+  - "(Navigator 제안, AC-005 PASS 시 기록) 실제 브라우저에서 로그인 후 access token이 자연 만료될 때까지(또는 짧게 설정해) 기다려 proxy가 실제로 세션을 갱신하는지 1회 확인 — tests/unit/proxy.test.ts는 우리 relay 로직이 옳다는 것만 증명하지, @supabase/ssr이 실제로 그 시점에 setAll을 호출한다는 라이브러리 쪽 계약까지 실물로 확인한 것은 아니다"
+
+# 2026-09-13 — 모든 항목 아직 미수행. Navigator가 세션 종료 시 명시적으로 경고함:
+# "이번 /run 완료를 프로덕션 준비 완료로 간주하면 안 된다 — 실제 Google Cloud
+# Console 자격증명으로 위 항목들을 사람이 확인하기 전까지는 AC-003/AC-007이
+# 완전히 종결됐다고 보기 어렵다."

@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import * as authService from "@/services/auth-service";
-import { setSessionCookie } from "@/app/_lib/session";
+import { buildCookieAdapter } from "@/app/_lib/session";
 
 export async function signInAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
@@ -12,9 +12,8 @@ export async function signInAction(formData: FormData) {
     redirect("/login?error=INVALID_INPUT");
   }
 
-  let result;
   try {
-    result = await authService.signIn({ email, password });
+    await authService.signIn({ email, password }, await buildCookieAdapter());
   } catch (err) {
     if (err instanceof authService.AuthError) {
       redirect(`/login?error=${err.code}`);
@@ -22,6 +21,5 @@ export async function signInAction(formData: FormData) {
     throw err;
   }
 
-  await setSessionCookie(result.session);
   redirect("/dashboard");
 }

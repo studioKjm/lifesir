@@ -156,11 +156,12 @@ max_indexes = 5
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
-site_url = "http://127.0.0.1:3000"
+site_url = "http://127.0.0.1:3100"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["https://127.0.0.1:3000"]
+# 3100은 이 프로젝트의 실제 dev/e2e 포트(playwright.config.ts, npm run dev -- --port 3100).
+additional_redirect_urls = ["http://127.0.0.1:3100", "http://127.0.0.1:3100/auth/callback"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -204,7 +205,11 @@ anonymous_users = 30
 # Number of sessions that can be refreshed in a 5 minute interval per IP address.
 token_refresh = 150
 # Number of sign up and sign-in requests that can be made in a 5 minute interval per IP address (excludes anonymous users).
-sign_in_sign_ups = 30
+# 2026-09-13(/evaluate): 기본값 30은 이 프로젝트의 병렬 Playwright e2e 스위트
+# (전체 실행 시 signup/signin이 30회를 넘음, 전부 127.0.0.1에서 옴)에는 부족해
+# "signup rate limit exceeded"로 무작위 실패를 냈다. 이 파일은 로컬 개발 전용
+# 설정이라(운영 배포는 별도 관리) 테스트 목적으로만 올린다.
+sign_in_sign_ups = 300
 # Number of OTP / Magic link verifications that can be made in a 5 minute interval per IP address.
 token_verifications = 30
 # Number of Web3 logins that can be made in a 5 minute interval per IP address.
@@ -332,6 +337,21 @@ url = ""
 # If enabled, the nonce check will be skipped. Required for local sign in with Google auth.
 skip_nonce_check = false
 # If enabled, it will allow the user to successfully authenticate when the provider does not return an email address.
+email_optional = false
+
+# seed-v2 — 구글 로그인. Client ID/Secret은 Google Cloud Console에서 직접 발급
+# (docs/TRD.md 참고) → .env.local의 SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID/SECRET에
+# 채운 뒤 enabled를 true로 바꾸고 `supabase stop && supabase start`로 재기동한다.
+[auth.external.google]
+enabled = false
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+redirect_uri = ""
+url = ""
+# 로컬(http, 비-공인 도메인) 환경에서 구글 로그인 시 nonce 검증이 실패하는
+# 알려진 이슈가 있어 로컬 개발에서만 끈다 — 운영 배포 시에는 반드시 false로
+# 되돌린다(별도 시드/설정으로 관리).
+skip_nonce_check = true
 email_optional = false
 
 # Allow Solana wallet holders to sign in to your project via the Sign in with Solana (SIWS, EIP-4361) standard.

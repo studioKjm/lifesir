@@ -2,7 +2,9 @@
 // service role key를 사용하므로 절대 클라이언트(브라우저)에 노출하지 않는다.
 // src/app, src/components에서 직접 import 금지 (boundaries.yaml 게이트가 강제).
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createServerClient } from "@supabase/ssr";
 import NodeWebSocket from "ws";
+import type { SupabaseCookieAdapter } from "@/types/dto";
 
 // Node 20은 네이티브 WebSocket이 없어 supabase-js의 내부 Realtime 클라이언트
 // 초기화가 실패한다. 이 프로젝트는 Realtime을 쓰지 않지만(부모 대시보드는
@@ -61,6 +63,39 @@ export function createAuthClient(): SupabaseClient {
   return createClient(url, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
+}
+
+function readPublicEnv(): { url: string; anonKey: string } {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  const missing: string[] = [];
+  if (!url) missing.push("NEXT_PUBLIC_SUPABASE_URL");
+  if (!anonKey) missing.push("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  if (missing.length > 0) {
+    throw new MissingSupabaseEnvError(missing);
+  }
+
+  return { url: url as string, anonKey: anonKey as string };
+}
+
+/**
+ * T-002 (seed-v2) — 쿠키 기반 세션을 다루는 @supabase/ssr 서버 클라이언트.
+ * anon key만 사용한다(service_role 아님) — RLS를 우회하지 않는다.
+ *
+ * 쿠키 읽기/쓰기는 Next.js 프레임워크(`next/headers`의 cookies(), 또는 proxy의
+ * request/response)에 묶여 있는데, 이 파일(Data 레이어)은 boundaries.yaml 규칙상
+ * `next/*`를 import할 수 없다. 그래서 실제 쿠키 접근은 호출부(Presentation:
+ * Server Action/Route Handler/proxy.ts)가 만들어서 `cookieAdapter` 인자로
+ * 넘긴다 — 이 함수는 그 어댑터가 무엇으로 구현됐는지 전혀 모른다.
+ *
+ * `getSupabaseClient()`와 달리 절대 캐싱하지 않는다 — 사용자마다, 요청마다
+ * 다른 쿠키(세션)를 담아야 하는 클라이언트를 캐싱하면 세션이 서로 섞인다
+ * (createAuthClient()의 주석에 기록된 것과 같은 클래스의 버그).
+ */
+export function createServerSupabaseClient(cookieAdapter: SupabaseCookieAdapter): SupabaseClient {
+  const { url, anonKey } = readPublicEnv();
+  return createServerClient(url, anonKey, { cookies: cookieAdapter });
 }
 
 /** 테스트 전용 — 캐시된 클라이언트를 초기화한다. */

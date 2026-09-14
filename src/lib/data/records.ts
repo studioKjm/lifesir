@@ -13,7 +13,8 @@ export interface UserRecord {
   id: string;
   email: string;
   name: string;
-  birthDate: string;
+  // seed-v2: 구글 OAuth로 처음 로그인하면 온보딩 전까지 생년월일이 없다.
+  birthDate: string | null;
   agentPersonaId: string | null;
   createdAt: string;
 }

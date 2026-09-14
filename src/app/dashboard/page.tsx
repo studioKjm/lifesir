@@ -5,6 +5,7 @@ import { AppShell } from "@/components/AppShell";
 import { DashboardChart } from "@/components/DashboardChart";
 import { HealthLogForm } from "@/components/HealthLogForm";
 import { EmptyState } from "@/components/EmptyState";
+import { OnboardingBanner } from "@/components/OnboardingBanner";
 import type { HealthLogType } from "@/types/dto";
 import styles from "./dashboard.module.css";
 
@@ -36,6 +37,8 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
       <p style={{ color: "var(--ink-muted)", fontSize: 14, marginBottom: 20 }}>
         오늘 하루의 기록을 남기고 흐름을 확인하세요.
       </p>
+
+      {!session.agentPersonaId && <OnboardingBanner />}
 
       {errorCode && (
         <div role="alert" style={{ marginBottom: 16 }}>
