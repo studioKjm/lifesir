@@ -3,6 +3,7 @@ import { getSession } from "@/app/_lib/session";
 import * as careLinkService from "@/services/care-link-service";
 import * as dashboardService from "@/services/dashboard-service";
 import { CareLinkError } from "@/services/care-link-service";
+import { isAdminEmail } from "@/services/admin-service";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { ParentDashboardLive } from "@/components/ParentDashboardLive";
@@ -39,7 +40,7 @@ export default async function ParentDashboardPage({
   } catch (err) {
     if (err instanceof CareLinkError) {
       return (
-        <AppShell active="care-links" user={session}>
+        <AppShell active="care-links" user={session} isAdmin={isAdminEmail(session.email)}>
           <EmptyState variant="forbidden" />
         </AppShell>
       );
@@ -48,7 +49,7 @@ export default async function ParentDashboardPage({
   }
 
   return (
-    <AppShell active="care-links" user={session}>
+    <AppShell active="care-links" user={session} isAdmin={isAdminEmail(session.email)}>
       <h1 className="page-title">{counterpartName}님의 건강 대시보드</h1>
       <p className="page-subtitle">기록 열람은 읽기 전용이에요. 대신 기록은 아래에서 남길 수 있어요.</p>
 

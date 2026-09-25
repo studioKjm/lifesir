@@ -18,3 +18,18 @@ export class DuplicateEmailError extends RepositoryError {
     this.email = email;
   }
 }
+
+/**
+ * (seed-v3, AC-003) payment_methods.user_id의 UNIQUE 제약(Postgres 23505) 위반을
+ * 구분해서 던진다 — "무료체험은 User당 평생 1회"라는 불변식의 최종 방어선이다.
+ * Logic 레이어가 사전 확인(findByUserId)을 하더라도 동시 요청(TOCTOU)이 이 제약을
+ * 뚫으려 시도할 수 있는데, 그걸 여기서 감지해 정상적인 도메인 에러로 변환한다.
+ */
+export class DuplicatePaymentMethodError extends RepositoryError {
+  userId: string;
+  constructor(userId: string, options?: { cause?: unknown }) {
+    super(`이미 결제수단이 등록된 사용자입니다 (userId=${userId})`, options);
+    this.name = "DuplicatePaymentMethodError";
+    this.userId = userId;
+  }
+}

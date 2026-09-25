@@ -70,29 +70,31 @@ export function ParentDashboardLive({ careLinkId, initialView }: ParentDashboard
           <EmptyState variant="empty" description="아직 기록이 없어요." />
         </div>
       ) : (
-        <table className={`data-table ${styles.table}`}>
-          <thead>
-            <tr>
-              <th>시각</th>
-              <th>종류</th>
-              <th>값</th>
-              <th>메모</th>
-            </tr>
-          </thead>
-          <tbody>
-            {view.entries.map((entry) => (
-              <tr key={entry.id}>
-                <td>{new Date(entry.loggedAt).toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short" })}</td>
-                <td>{LABELS[entry.logType]}</td>
-                <td className="data-table__value">
-                  {entry.value}
-                  {entry.unit ?? ""}
-                </td>
-                <td className="data-table__note">{entry.note ?? "—"}</td>
+        <div className="table-scroll">
+          <table className={`data-table ${styles.table}`}>
+            <thead>
+              <tr>
+                <th>시각</th>
+                <th>종류</th>
+                <th>값</th>
+                <th>메모</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {view.entries.map((entry) => (
+                <tr key={entry.id}>
+                  <td>{new Date(entry.loggedAt).toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short" })}</td>
+                  <td>{LABELS[entry.logType]}</td>
+                  <td className="data-table__value">
+                    {entry.value}
+                    {entry.unit ?? ""}
+                  </td>
+                  <td className="data-table__note">{entry.note ?? "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

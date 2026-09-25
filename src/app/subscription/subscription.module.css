@@ -1,0 +1,23 @@
+.panel {
+  max-width: 560px;
+}
+
+.statusCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.planLine {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.dateLine {
+  color: var(--ink-muted);
+  font-size: 13px;
+}

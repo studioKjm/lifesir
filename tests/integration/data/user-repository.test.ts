@@ -110,4 +110,17 @@ describe("user-repository (통합, 로컬 Supabase)", () => {
   it("존재하지 않는 userId로 온보딩을 완료하려 하면 명확히 실패한다(고아 데이터 생성 금지)", async () => {
     await expect(completeOnboarding("00000000-0000-0000-0000-000000000000", "1990-01-01")).rejects.toThrow();
   });
+
+  it("countAll은 새로 생성한 만큼(최소) 개수가 늘어난다 (T-013, seed-v4 AC-004)", async () => {
+    // 다른 테스트 파일이 병렬로 실행되며 전체 카운트에 영향을 줄 수 있어
+    // (vitest threads pool) 정확한 델타(+1)가 아니라 최소 +1을 확인한다.
+    const before = await userRepository.countAll();
+
+    const auth = await createTestAuthUser("count-test");
+    createdIds.push(auth.id);
+    await userRepository.createUser({ id: auth.id, email: auth.email, name: "카운트 테스트", agentPersonaId: null });
+
+    const after = await userRepository.countAll();
+    expect(after).toBeGreaterThanOrEqual(before + 1);
+  });
 });

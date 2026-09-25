@@ -76,4 +76,23 @@ describe("health-log-repository (통합, 로컬 Supabase)", () => {
     expect(logs[0].userId).toBe(parent);
     expect(logs[0].loggedByUserId).toBe(child);
   });
+
+  it("countAll은 새로 생성한 만큼(최소) 개수가 늘어난다 (T-011, seed-v4 AC-004)", async () => {
+    // 다른 테스트 파일이 병렬로 실행되며 전체 카운트에 영향을 줄 수 있어
+    // (vitest threads pool) 정확한 델타(+1)가 아니라 최소 +1을 확인한다 —
+    // 이 스위트의 다른 통합 테스트들과 동일한 방침(toBeGreaterThanOrEqual).
+    const userId = await makeUser("hl-count");
+    const before = await healthLogRepository.countAll();
+
+    await healthLogRepository.createHealthLog({
+      userId,
+      loggedByUserId: userId,
+      logType: "weight",
+      value: "65",
+      loggedAt: new Date().toISOString(),
+    });
+
+    const after = await healthLogRepository.countAll();
+    expect(after).toBeGreaterThanOrEqual(before + 1);
+  });
 });

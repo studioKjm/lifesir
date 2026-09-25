@@ -1,0 +1,230 @@
+# Task Decomposition — seed-v3 (결제 기능, 토스페이먼츠 구독형 정기결제)
+# Source: .harness/ouroboros/seeds/seed-v3.yaml + docs/TRD.md §15-21
+
+decomposition:
+  seed_ref: "seed-v3.yaml"
+  trd_ref: "docs/TRD.md#seed-v3"
+  total_tasks: 23
+
+  tasks:
+    # ── Phase 1: Data — 스키마 ──────────────────────────────────────
+    - id: "T-001"
+      ac_ref: ["AC-002", "AC-003", "AC-004", "AC-005", "AC-006", "AC-007", "AC-008", "AC-009"]
+      layer: "data"
+      description: "마이그레이션: payment_methods(user_id UNIQUE), subscriptions(status/plan check 제약, next_billing_at 인덱스), payment_attempts 3개 테이블 생성"
+      test: "실제 로컬 Postgres에 적용 후 제약 검증 — 동일 user_id로 payment_methods 2건 삽입 시 UNIQUE 위반, 잘못된 status 문자열 삽입 시 check 제약 위반"
+      depends_on: []
+      estimated_minutes: 20
+
+    # ── Phase 2: Data — 클라이언트/레포지토리 ───────────────────────
+    - id: "T-002"
+      ac_ref: ["AC-002", "AC-004", "AC-008"]
+      layer: "data"
+      description: "toss-client.ts — issueBillingKey(authKey, customerKey) → POST /v1/billing/authorizations/issue, chargeBilling(billingKey, {customerKey, amount, orderId, orderName}) → POST /v1/billing/{billingKey}. TOSS_SECRET_KEY로 Basic Auth 헤더 구성. docs/toss-payments-setup.md(토스 개발자센터 키 발급 가이드, 에이전트가 대신 할 수 없는 외부 작업)도 이 태스크에서 함께 작성"
+      test: "유닛 테스트 — Authorization 헤더가 올바른 Basic base64(secretKey:) 형식인지, 응답 200을 파싱해 billingKey/paymentKey를 반환하는지, 비-200 응답을 예외로 던지는지 (fetch mock)"
+      depends_on: []
+      estimated_minutes: 25
+    - id: "T-003"
+      ac_ref: ["AC-002", "AC-003", "AC-008"]
+      layer: "data"
+      description: "payment-method-repository.ts — create, findByUserId"
+      test: "통합 테스트 — 실제 Postgres에 생성 후 조회, 동일 user_id 재생성 시도 시 T-001의 UNIQUE 제약으로 실패하는 것을 리포지토리 계층에서 확인"
+      depends_on: ["T-001"]
+      estimated_minutes: 15
+    - id: "T-004"
+      ac_ref: ["AC-001", "AC-003", "AC-004", "AC-005", "AC-006", "AC-007", "AC-008", "AC-009"]
+      layer: "data"
+      description: "subscription-repository.ts — create, findLatestByUserId, findDueToday(), findExpiredCanceled(), updateStatus"
+      test: "통합 테스트 — 여러 상태(trial/active/past_due/canceled/expired)의 Subscription을 섞어 생성한 뒤 findDueToday/findExpiredCanceled가 정확한 부분집합만 반환하는지 확인"
+      depends_on: ["T-001"]
+      estimated_minutes: 25
+    - id: "T-005"
+      ac_ref: ["AC-004", "AC-005"]
+      layer: "data"
+      description: "payment-attempt-repository.ts — create"
+      test: "통합 테스트 — 생성 후 조회, subscription_id FK 제약(존재하지 않는 subscription_id로 생성 시도 시 실패) 확인"
+      depends_on: ["T-001"]
+      estimated_minutes: 10
+
+    # ── Phase 3: Logic ──────────────────────────────────────────────
+    - id: "T-006"
+      ac_ref: ["AC-001"]
+      layer: "logic"
+      description: "subscription-service.checkAICoachAccess(userId) — 최신 Subscription 조회 후 5개 상태(trial/active/canceled-유예중/canceled-만료/past_due/구독이력없음) 판정"
+      test: "유닛 테스트 — 5개 상태 분기 각각(trial→허용, active→허용, canceled+period 이전→허용, canceled+period 이후→차단, past_due→차단, 이력 없음→차단), subscription-repository는 mock"
+      depends_on: ["T-004"]
+      estimated_minutes: 20
+    - id: "T-007"
+      ac_ref: ["AC-002", "AC-003"]
+      layer: "logic"
+      description: "subscription-service.startFreeTrial(userId, plan, authKey) — PaymentMethod 존재 여부 확인(무료체험 1회 불변식) → toss-client.issueBillingKey → PaymentMethod/Subscription(trial, trial_end_at=+7일) 생성"
+      test: "유닛 테스트 — 정상 케이스, PaymentMethod가 이미 있으면 SubscriptionError로 거부(AC-003), toss-client 실패 시 레코드 생성 없이 에러 전파. toss-client/repository는 mock"
+      depends_on: ["T-002", "T-003", "T-004"]
+      estimated_minutes: 25
+    - id: "T-008"
+      ac_ref: ["AC-006"]
+      layer: "logic"
+      description: "subscription-service.cancelSubscription(userId) — 현재 유효 Subscription을 status=canceled, canceled_at=now, next_billing_at=null로 갱신"
+      test: "유닛 테스트 — 정상 해지, 유효 Subscription이 없을 때 에러. repository는 mock"
+      depends_on: ["T-004"]
+      estimated_minutes: 15
+    - id: "T-009"
+      ac_ref: ["AC-008"]
+      layer: "logic"
+      description: "subscription-service.resubscribe(userId, plan) — PaymentMethod의 billingKey로 즉시 청구, 성공 시 trial 단계 없이 status=active인 Subscription 생성"
+      test: "유닛 테스트 — 정상 재구독(trial 스킵 확인), 청구 실패 시 레코드 생성 없이 에러, PaymentMethod 자체가 없을 때 에러(StartFreeTrial 유도). mock"
+      depends_on: ["T-002", "T-003", "T-004"]
+      estimated_minutes: 20
+    - id: "T-010"
+      ac_ref: ["AC-004", "AC-005"]
+      layer: "logic"
+      description: "billing-service.runDailyBilling() — findDueToday() 순회, toss-client.chargeBilling 호출, 성공/실패에 따라 PaymentAttempt 기록 + Subscription 상태 갱신(성공: active+다음주기, 실패: past_due+next_billing_at=null, 원인 불문 동일 처리)"
+      test: "유닛 테스트 — 성공 케이스(PaymentAttempt success 기록 + 다음 주기 계산 정확성), 실패 케이스(past_due 전환 + 재시도 대상에서 제외됨을 next_billing_at=null로 확인), 대상 없을 때 no-op. mock"
+      depends_on: ["T-002", "T-004", "T-005"]
+      estimated_minutes: 25
+    - id: "T-011"
+      ac_ref: ["AC-007"]
+      layer: "logic"
+      description: "billing-service.expireCanceledSubscriptions() — findExpiredCanceled() 대상을 status=expired로 전환"
+      test: "유닛 테스트 — 만료 대상 있을 때 전환, current_period_end가 아직 안 지난 canceled는 건드리지 않음, 대상 없을 때 no-op. mock"
+      depends_on: ["T-004"]
+      estimated_minutes: 15
+
+    # ── Phase 4: Presentation ───────────────────────────────────────
+    - id: "T-012"
+      ac_ref: ["AC-002"]
+      layer: "presentation"
+      description: "src/lib/toss-browser.ts — 토스 v2 SDK 스크립트 태그 로드 + requestBillingAuth('CARD', {successUrl, failUrl, customerEmail}) 호출 유틸. NEXT_PUBLIC_TOSS_CLIENT_KEY만 사용(Data 레이어 아님, supabase-browser.ts와 동일 선례)"
+      test: "유닛 테스트 — env var(NEXT_PUBLIC_TOSS_CLIENT_KEY) 누락 시 에러 던지는지 (supabase-browser.test.ts 패턴)"
+      depends_on: []
+      estimated_minutes: 20
+    - id: "T-013"
+      ac_ref: ["AC-002"]
+      layer: "presentation"
+      description: "components/PlanSelector.tsx — 월간/연간 플랜 선택 UI(client component), toss-browser.ts로 카드 등록 트리거"
+      test: "없음(순수 UI, /run 단계에서 렌더링 확인 — GEN-007 원칙: 이 컴포넌트를 실제로 렌더링하는 페이지가 T-014에 있는지 함께 확인)"
+      depends_on: ["T-012"]
+      estimated_minutes: 15
+    - id: "T-014"
+      ac_ref: ["AC-002", "AC-008", "AC-009"]
+      layer: "presentation"
+      description: "app/subscription/page.tsx — 구독 상태별 조건부 렌더링(없음→PlanSelector, trial/active→상태+해지버튼, past_due→재결제 안내+재구독, canceled 유예중→상태+재구독 옵션)"
+      test: "E2E — 상태별 화면 분기(구독 없음/trial/active/past_due/canceled) 각각 확인"
+      depends_on: ["T-006", "T-007", "T-013"]
+      estimated_minutes: 25
+    - id: "T-015"
+      ac_ref: ["AC-002"]
+      layer: "presentation"
+      description: "app/subscription/callback/route.ts — 토스 successUrl/failUrl 콜백(authKey, customerKey 파싱) → startFreeTrial 호출 → /chat 또는 에러 리다이렉트 (얇은 어댑터, auth/callback/route.ts와 동일 패턴)"
+      test: "E2E — code 없이 콜백 도달 시 에러 리다이렉트, 유효하지 않은 authKey 시 에러 리다이렉트"
+      depends_on: ["T-007"]
+      estimated_minutes: 15
+    - id: "T-016"
+      ac_ref: ["AC-006", "AC-008"]
+      layer: "presentation"
+      description: "app/subscription/actions.ts — cancelSubscriptionAction, resubscribeAction (Server Action)"
+      test: "E2E — 해지 버튼 클릭 후 상태 반영, 재구독 버튼 클릭 후 상태 반영"
+      depends_on: ["T-008", "T-009"]
+      estimated_minutes: 15
+    - id: "T-017"
+      ac_ref: ["AC-001"]
+      layer: "presentation"
+      description: "app/chat/page.tsx 수정 — checkAICoachAccess 호출 후 차단이면 ChatWindow 대신 구독 유도 배너(/subscription 링크) 렌더링"
+      test: "E2E — 구독 없는 유저는 /chat에서 배너만 보이고 ChatWindow는 안 보임, 유효 구독 유저는 정상적으로 ChatWindow가 보임"
+      depends_on: ["T-006"]
+      estimated_minutes: 15
+    - id: "T-018"
+      ac_ref: ["AC-001"]
+      layer: "presentation"
+      description: "app/api/chat/route.ts 수정 — checkAICoachAccess 재확인(defense in depth), 차단 시 403"
+      test: "E2E/API 테스트 — 페이지 게이트를 우회해 API를 직접 호출해도 구독 없는 유저는 403"
+      depends_on: ["T-006"]
+      estimated_minutes: 10
+    - id: "T-019"
+      ac_ref: ["AC-004", "AC-005", "AC-007"]
+      layer: "presentation"
+      description: "app/api/cron/billing/route.ts — CRON_SECRET 헤더 검증 → runDailyBilling() + expireCanceledSubscriptions() 호출, 결과 JSON 반환"
+      test: "E2E — 잘못된/누락된 시크릿이면 401, 올바른 시크릿이면 정상 실행 결과 반환"
+      depends_on: ["T-010", "T-011"]
+      estimated_minutes: 15
+    - id: "T-020"
+      ac_ref: ["AC-002", "AC-009"]
+      layer: "presentation"
+      description: "src/proxy.ts 수정 — matcher에 /subscription/:path* 추가 (기존 세션 게이트 로직 재사용, /api/cron/billing은 세션 기반이 아니므로 matcher에서 제외)"
+      test: "E2E — 세션 없이 /subscription 접근 시 /login으로 리다이렉트, /api/cron/billing은 proxy 영향 없이 자체 시크릿으로만 게이트됨을 확인"
+      depends_on: ["T-014"]
+      estimated_minutes: 10
+
+    # ── Phase 5: 회귀/일관성 검증 ─────────────────────────────────────
+    - id: "T-021"
+      ac_ref: ["AC-010"]
+      layer: "presentation"
+      description: "회귀 확인 — 이번 시드에서 /dashboard, /care-links 관련 파일은 일절 수정하지 않는다(코드 작성 없음, 검증만)"
+      test: "E2E — 구독이 전혀 없는(무료) 유저도 /dashboard, /care-links에 정상 접근하고 기능을 사용할 수 있음을 확인"
+      depends_on: ["T-006"]
+      estimated_minutes: 15
+    - id: "T-022"
+      ac_ref: ["AC-011"]
+      layer: "logic"
+      description: "일관성 확인 — seed-v1/v2 시절 가입한 것처럼 보이는(가입일이 이전인) User도 신규 유저와 완전히 동일한 checkAICoachAccess 판정을 받는지 확인(코드에 별도 분기 없음을 테스트로 증명)"
+      test: "유닛/통합 테스트 — created_at이 과거인 User와 방금 생성된 User가 동일한 입력(구독 없음)에 대해 동일한 차단 결과를 반환"
+      depends_on: ["T-006"]
+      estimated_minutes: 10
+
+    # ── Phase 6: 배포 설정 ──────────────────────────────────────────
+    - id: "T-023"
+      ac_ref: ["AC-004", "AC-007"]
+      layer: "presentation"
+      description: "vercel.ts(또는 vercel.json)에 crons 설정 추가 — /api/cron/billing을 매일 1회 호출하도록 스케줄 등록. CRON_SECRET 환경변수 설정 안내를 docs/toss-payments-setup.md에 추가"
+      test: "수동 검증 — 로컬에서는 cron이 실제로 안 돌기 때문에 자동화 불가. curl로 /api/cron/billing을 CRON_SECRET과 함께 수동 호출해 정상 동작 확인, 실 배포 후 Vercel 대시보드에서 cron 실행 로그 확인은 manual_verification_checklist로 이관"
+      depends_on: ["T-019"]
+      estimated_minutes: 15
+
+  execution_order:
+    - phase: 1
+      tasks: ["T-001"]
+    - phase: 2
+      tasks: ["T-002", "T-003", "T-004", "T-005", "T-012"]
+    - phase: 3
+      tasks: ["T-006", "T-007", "T-008", "T-009", "T-010", "T-011"]
+    - phase: 4
+      tasks: ["T-013", "T-014", "T-015", "T-016", "T-017", "T-018", "T-019", "T-020"]
+    - phase: 5
+      tasks: ["T-021", "T-022"]
+    - phase: 6
+      tasks: ["T-023"]
+
+validation:
+  total_tasks: 23
+  by_layer:
+    data: 5
+    logic: 8
+    presentation: 10
+  dependencies_valid: true
+  all_testable: true
+  all_under_30min: true
+  ac_coverage: "AC-001~011 전부 최소 1개 태스크에서 커버됨(검증 완료)"
+  result: "VALID"
+
+manual_verification_checklist:
+  # 자동화 대상 밖 — seed-v3 non_goals 및 실제 결제 PG 연동 특성상 사람이 확인해야 하는 항목
+  - "실제 토스페이먼츠 테스트(sandbox) 카드로 '카드 등록 → 무료체험 시작 → /chat 사용' 전체 흐름 1회 수동 확인"
+  - "실제 토스페이먼츠 정산 없이, /api/cron/billing을 수동 curl 호출해 실제 빌링키로 소액 결제가 승인되는지 확인 (테스트 카드 기준)"
+  - "Vercel 배포 후 실제 Cron이 설정한 스케줄대로 실행되는지 Vercel 대시보드 Cron 로그에서 확인"
+  - "결제 실패를 재현할 수 있는 토스 테스트 카드(한도초과 시뮬레이션 등)로 past_due 전환 + AI 코치 즉시 차단을 실물로 확인"
+  - "해지 후 current_period_end까지 실제로 접근이 유지되는지, 그 이후 자동으로 차단되는지 날짜를 조작한 테스트 데이터로 확인(로컬 DB 직접 조작 + cron 수동 트리거로 시뮬레이션 가능 — 실제 날짜 경과를 기다릴 필요는 없음)"
+
+note: >
+  T-013(PlanSelector)은 순수 UI라 자체 테스트가 없다 — GEN-007 컨벤션(2026-09-11 lifesir AC-005 사례)에
+  따라, /run 단계에서 T-014가 이 컴포넌트를 실제로 렌더링하는 진입점을 제공하는지 반드시 함께 확인한다.
+
+  2026-09-16 — 전체 AC-001~011 Navigator PASS 확정 후, 독립 Test Designer(worktree 격리, seed-v3
+  산출물이 아직 커밋 안 돼 있어 blind 요약 기반 재구성 설계)의 모호성 지적("cron 이중 청구 판정 기준
+  미확정")을 계기로 재검토한 결과, T-010(billing-service.runDailyBilling)에 실제 결함이 남아있는 것을
+  발견했다 — chargeBilling 호출 전에 청구 슬롯을 선점하는 락이 없어, /api/cron/billing이 겹쳐 호출되면
+  (docs/toss-payments-setup.md가 안내하는 수동 curl 확인이 스케줄 실행과 겹치는 등) 같은 구독이 두 번
+  청구될 수 있었다 — AC-008에서 이미 한 번 잡은 것과 완전히 같은 클래스의 버그가 AC-004/005 라운드와
+  그 RETRY, AC-007 라운드까지 발견되지 않은 채 남아있었다는 뜻이다. subscription-repository에
+  claimBillingSlot(조건부 WHERE UPDATE, markPastDueAsExpired와 동일 패턴)을 추가해 processSingleBilling이
+  charge 전에 반드시 선점하도록 수정, 통합/유닛 테스트로 검증했다(Navigator 세션 종료 후 발견이라 별도
+  재승인 없이 기존에 이미 승인된 방어 패턴을 그대로 적용하는 선에서 직접 수정).

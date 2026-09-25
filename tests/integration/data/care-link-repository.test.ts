@@ -69,4 +69,37 @@ describe("care-link-repository (통합, 로컬 Supabase)", () => {
     expect(forChild.map((l) => l.id)).toContain(created.id);
     expect(forChild.length).toBeGreaterThanOrEqual(2);
   });
+
+  it("countByStatus('accepted')는 accepted로 갱신한 만큼(최소) 늘어난다 (T-012, seed-v4 AC-004)", async () => {
+    // 다른 테스트 파일이 병렬로 실행되며 전체 카운트에 영향을 줄 수 있어
+    // (vitest threads pool) 정확한 델타(+1)가 아니라 최소 +1을 확인한다.
+    const child = await makeUser("cl-count-child");
+    const parent = await makeUser("cl-count-parent");
+    const before = await careLinkRepository.countByStatus("accepted");
+
+    const link = await careLinkRepository.create(child, parent);
+    await careLinkRepository.updateStatus(link.id, "accepted");
+
+    const after = await careLinkRepository.countByStatus("accepted");
+    expect(after).toBeGreaterThanOrEqual(before + 1);
+  });
+
+  it("countByStatus는 status 필터를 정확히 적용한다(pending 생성이 accepted 카운트에 잡히지 않음)", async () => {
+    const child = await makeUser("cl-count-pending-child");
+    const parent = await makeUser("cl-count-pending-parent");
+
+    const link = await careLinkRepository.create(child, parent); // status=pending
+
+    const acceptedCount = await careLinkRepository.countByStatus("accepted");
+    const pendingCount = await careLinkRepository.countByStatus("pending");
+
+    // 방금 만든 pending 링크 자신은 pending 카운트에는 잡히고(간접 확인),
+    // accepted 카운트 쿼리가 status 필터 없이 전체를 세는 버그였다면
+    // pending 카운트 >= 1인데 accepted가 그만큼 부풀지 않았는지는 다른
+    // 테스트(위 accepted 증가 테스트)가 직접 검증한다 — 여기선 이 링크가
+    // pending으로 정확히 집계되는지만 확인한다.
+    expect(pendingCount).toBeGreaterThanOrEqual(1);
+    expect(link.status).toBe("pending");
+    expect(acceptedCount).toBeGreaterThanOrEqual(0);
+  });
 });

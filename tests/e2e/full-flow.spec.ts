@@ -34,13 +34,13 @@ test.describe("전체 플로우 (AC-011)", () => {
     // AC-006 — 대시보드에 즉시 반영된다 (요약 타일 "최근 30분"과 기록 테이블 셀 둘 다에 나타난다).
     await expect(page.getByRole("cell", { name: "30분" })).toBeVisible();
 
-    // AC-008 — AI 코치와 대화.
+    // AC-008 — AI 코치와 대화는 seed-v3부터 구독이 필요하다(AC-001). 신규
+    // 가입 직후엔 구독이 없으므로 여기서는 게이트가 뜨는 것만 확인한다 — 실제
+    // 대화 플로우는 tests/e2e/subscription-gate.spec.ts의 trial 유저 케이스가
+    // 검증한다(회귀 방지: chat gate 도입이 seed-v1 AC-008 자체를 깨지 않았음).
     await page.goto("/chat");
-    await page.getByPlaceholder("메시지를 입력하세요").fill("오늘 컨디션 어때 보여?");
-    await page.getByRole("button", { name: "보내기" }).click();
-    await expect(page.locator(".bubbleRowUser, [class*='bubbleRowUser']").last()).toBeVisible();
-    // LLM 키가 없는 로컬 환경에서도 서비스가 폴백 메시지로 응답하므로, 어떤 형태로든 답장 버블이 생긴다.
-    await expect(page.locator("[class*='bubbleAssistant']").last()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("link", { name: "구독하기" })).toBeVisible();
+    await expect(page.getByPlaceholder("메시지를 입력하세요")).toHaveCount(0);
   });
 
   test("CareLink 요청→수락(AC-003) 후에만 자녀가 부모 대시보드를 볼 수 있다(AC-004, AC-007)", async ({ browser }) => {

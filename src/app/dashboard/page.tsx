@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/app/_lib/session";
 import * as dashboardService from "@/services/dashboard-service";
+import { isAdminEmail } from "@/services/admin-service";
 import { AppShell } from "@/components/AppShell";
 import { DashboardChart } from "@/components/DashboardChart";
 import { HealthLogForm } from "@/components/HealthLogForm";
@@ -32,7 +33,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const view = await dashboardService.getOwnDashboard(session.id);
 
   return (
-    <AppShell active="dashboard" user={session}>
+    <AppShell active="dashboard" user={session} isAdmin={isAdminEmail(session.email)}>
       <h1 className="page-title">내 건강 대시보드</h1>
       <p className="page-subtitle">오늘 하루의 기록을 남기고 흐름을 확인하세요.</p>
 
@@ -52,29 +53,31 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
           {view.entries.length === 0 ? (
             <EmptyState variant="empty" />
           ) : (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>시각</th>
-                  <th>종류</th>
-                  <th>값</th>
-                  <th>메모</th>
-                </tr>
-              </thead>
-              <tbody>
-                {view.entries.map((entry) => (
-                  <tr key={entry.id}>
-                    <td>{new Date(entry.loggedAt).toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short" })}</td>
-                    <td>{LABELS[entry.logType]}</td>
-                    <td className="data-table__value">
-                      {entry.value}
-                      {entry.unit ?? ""}
-                    </td>
-                    <td className="data-table__note">{entry.note ?? "—"}</td>
+            <div className="table-scroll">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>시각</th>
+                    <th>종류</th>
+                    <th>값</th>
+                    <th>메모</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {view.entries.map((entry) => (
+                    <tr key={entry.id}>
+                      <td>{new Date(entry.loggedAt).toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short" })}</td>
+                      <td>{LABELS[entry.logType]}</td>
+                      <td className="data-table__value">
+                        {entry.value}
+                        {entry.unit ?? ""}
+                      </td>
+                      <td className="data-table__note">{entry.note ?? "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
 

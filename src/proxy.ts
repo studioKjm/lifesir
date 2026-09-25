@@ -46,5 +46,16 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/care-links/:path*", "/chat/:path*", "/onboarding/:path*"],
+  matcher: [
+    "/dashboard/:path*",
+    "/care-links/:path*",
+    "/chat/:path*",
+    "/onboarding/:path*",
+    "/subscription/:path*", // seed-v3, T-020 — /api/cron/billing은 세션이 아니라 별도 시크릿으로 인증하므로 여기 포함하지 않는다
+    // seed-v4, T-023 — /admin은 세션 존재 여부만 여기서 판정한다. "로그인은
+    // 했지만 관리자가 아님"은 proxy가 판정하지 않는다(DB 테이블 조회 금지
+    // 제약) — 각 admin 페이지/Server Action이 admin-service.isAdminEmail로
+    // 직접 재확인한다(Navigator Plan A, AC-008).
+    "/admin/:path*",
+  ],
 };

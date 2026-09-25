@@ -97,3 +97,14 @@ export async function getPendingForUser(targetUserId: string): Promise<CareLinkR
   if (error) throw new RepositoryError(`대기중 CareLink 조회 실패 (targetUserId=${targetUserId})`, { cause: error });
   return (data ?? []).map(toRecord);
 }
+
+/** T-012 (seed-v4, AC-004) — 어드민 대시보드 서비스 통계용 상태별 개수. */
+export async function countByStatus(status: CareLinkStatus): Promise<number> {
+  const { count, error } = await getSupabaseClient()
+    .from("care_links")
+    .select("*", { count: "exact", head: true })
+    .eq("status", status);
+
+  if (error) throw new RepositoryError(`CareLink 개수 조회 실패 (status=${status})`, { cause: error });
+  return count ?? 0;
+}

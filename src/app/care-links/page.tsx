@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/app/_lib/session";
 import * as careLinkService from "@/services/care-link-service";
+import { isAdminEmail } from "@/services/admin-service";
 import { AppShell } from "@/components/AppShell";
 import { CareLinkRequestCard } from "@/components/CareLinkRequestCard";
 import { EmptyState } from "@/components/EmptyState";
@@ -31,7 +32,7 @@ export default async function CareLinksPage({ searchParams }: PageProps<"/care-l
   const sent = links.filter((l) => l.direction === "sent");
 
   return (
-    <AppShell active="care-links" user={session}>
+    <AppShell active="care-links" user={session} isAdmin={isAdminEmail(session.email)}>
       <div className={styles.head}>
         <h1 className="page-title">케어링크</h1>
         <p className="page-subtitle" style={{ marginBottom: 0 }}>

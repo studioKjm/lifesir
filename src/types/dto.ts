@@ -5,6 +5,10 @@ export type AgeBand = "10s" | "20s" | "30s" | "40s" | "50s_plus";
 export type CareLinkStatus = "pending" | "accepted" | "rejected" | "revoked";
 export type HealthLogType = "exercise" | "sleep" | "weight" | "meal" | "medication";
 export type MessageRole = "user" | "assistant" | "system";
+// seed-v3 — 결제/구독
+export type SubscriptionPlan = "monthly" | "yearly";
+export type SubscriptionStatus = "trial" | "active" | "canceled" | "past_due" | "expired";
+export type PaymentAttemptResult = "success" | "failure";
 
 export interface SignUpInput {
   email: string;
@@ -104,3 +108,6 @@ export interface MessageDTO {
   content: string;
   createdAt: string;
 }
+
+// seed-v4 — 관리자의 유일한 쓰기 액션. 새 값이 늘면 DB check 제약도 함께 갱신한다.
+export type AdminActionType = "recover_partial_failure";

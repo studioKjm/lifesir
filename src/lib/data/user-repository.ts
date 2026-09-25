@@ -93,3 +93,13 @@ export async function getUserById(id: string): Promise<UserRecord | null> {
   if (error) throw new RepositoryError(`User 조회 실패 (id=${id})`, { cause: error });
   return data ? toRecord(data) : null;
 }
+
+/** T-013 (seed-v4, AC-004) — 어드민 대시보드 서비스 통계용 전체 가입자 수. */
+export async function countAll(): Promise<number> {
+  const { count, error } = await getSupabaseClient()
+    .from("users")
+    .select("*", { count: "exact", head: true });
+
+  if (error) throw new RepositoryError("User 전체 개수 조회 실패", { cause: error });
+  return count ?? 0;
+}

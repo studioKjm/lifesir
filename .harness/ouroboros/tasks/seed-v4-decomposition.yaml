@@ -1,0 +1,272 @@
+decomposition:
+  seed_ref: "seed-v4.yaml"
+  trd_ref: "docs/TRD.md#seed-v4--관리자-대시보드"
+  total_tasks: 29
+
+  tasks:
+    # ── Data (T-001 ~ T-013) ────────────────────────────────────────
+    - id: "T-001"
+      ac_ref: "AC-006"
+      layer: "data"
+      description: "admin_action_logs 테이블 마이그레이션 (RLS 활성화 + service_role grant, on delete restrict)"
+      test: "마이그레이션 적용 후 테이블/제약(action_type enum, FK) 존재 확인 — integration"
+      depends_on: []
+      estimated_minutes: 15
+    - id: "T-002"
+      ac_ref: "AC-006"
+      layer: "data"
+      description: "admin-action-log-repository.create() 구현"
+      test: "정상 생성 + FK 위반(존재하지 않는 subscription_id) 시 RepositoryError — integration"
+      depends_on: ["T-001"]
+      estimated_minutes: 15
+    - id: "T-003"
+      ac_ref: "AC-001"
+      layer: "data"
+      description: "subscription-repository.countByStatus() 구현 — 상태별(trial/active/past_due/canceled/expired) 개수"
+      test: "각 상태 혼합 데이터에서 정확한 카운트 반환 — integration"
+      depends_on: []
+      estimated_minutes: 15
+    - id: "T-004"
+      ac_ref: "AC-002"
+      layer: "data"
+      description: "subscription-repository.searchSubscribers({search, status, page}) 구현 — users와 embedded select로 조인, email/name ilike 검색"
+      test: "검색어 매치/불일치, 상태 필터, 페이지네이션 경계 — integration"
+      depends_on: []
+      estimated_minutes: 25
+    - id: "T-005"
+      ac_ref: "AC-003"
+      layer: "data"
+      description: "subscription-repository.findAllByUserId(userId) 구현 — 해당 유저의 Subscription 전체(생성일 역순)"
+      test: "복수 Subscription(재구독 이력) 있는 유저에서 전체 반환 순서 확인 — integration"
+      depends_on: []
+      estimated_minutes: 15
+    - id: "T-006"
+      ac_ref: "AC-005"
+      layer: "data"
+      description: "subscription-repository.findStuckCandidates() 구현 — status IN(trial,active) AND next_billing_at IS NULL AND current_period_end < now"
+      test: "조건에 정확히 맞는 것만 반환(정상 trial/active는 제외) — integration"
+      depends_on: []
+      estimated_minutes: 20
+    - id: "T-007"
+      ac_ref: "AC-007"
+      layer: "data"
+      description: "subscription-repository.findDuplicateActiveGroups() 구현 — user_id별 유효(trial/active/past_due) Subscription 2건 이상 그룹"
+      test: "정상 유저(1건)는 안 잡히고, 인위적으로 만든 중복 유저만 그룹으로 반환 — integration"
+      depends_on: []
+      estimated_minutes: 20
+    - id: "T-008"
+      ac_ref: "AC-005"
+      layer: "data"
+      description: "payment-attempt-repository.findLatestBySubscriptionId(id) 구현 — attempted_at 내림차순 1건"
+      test: "여러 시도 기록 중 최신 1건만 반환, 기록 없으면 null — integration"
+      depends_on: []
+      estimated_minutes: 15
+    - id: "T-009"
+      ac_ref: "AC-003"
+      layer: "data"
+      description: "payment-attempt-repository.findBySubscriptionId(id) 구현 — 해당 subscription의 시도 전체"
+      test: "여러 건 전체 반환, 순서(시간순) 확인 — integration"
+      depends_on: []
+      estimated_minutes: 15
+    - id: "T-010"
+      ac_ref: "AC-001"
+      layer: "data"
+      description: "payment-attempt-repository.sumSuccessAmountInRange({start, end}) 구현 — result=success인 amount 합, 기간 필터"
+      test: "성공/실패 섞인 데이터에서 success만 합산, 기간 밖 데이터 제외 — integration"
+      depends_on: []
+      estimated_minutes: 20
+    - id: "T-011"
+      ac_ref: "AC-004"
+      layer: "data"
+      description: "health-log-repository.countAll() 구현 — 전체 HealthLog 개수"
+      test: "복수 유저 기록 합산 카운트 확인 — integration"
+      depends_on: []
+      estimated_minutes: 10
+    - id: "T-012"
+      ac_ref: "AC-004"
+      layer: "data"
+      description: "care-link-repository.countByStatus(status) 구현 — status='accepted' 등 상태별 개수"
+      test: "여러 상태 혼합 데이터에서 accepted만 카운트 — integration"
+      depends_on: []
+      estimated_minutes: 10
+    - id: "T-013"
+      ac_ref: "AC-004"
+      layer: "data"
+      description: "user-repository.countAll() 구현 — 전체 가입자 수"
+      test: "가입자 수 카운트 확인 — integration"
+      depends_on: []
+      estimated_minutes: 10
+
+    # ── Logic (T-014 ~ T-022) ────────────────────────────────────────
+    - id: "T-014"
+      ac_ref: "AC-008"
+      layer: "logic"
+      description: "admin-service.isAdminEmail(email) 순수 함수 — process.env.ADMIN_EMAIL과 정확히 일치할 때만 true, env 미설정 시 항상 false(fail-closed)"
+      test: "일치/불일치/대소문자 다름(불일치로 처리)/env 미설정 4가지 분기 — unit"
+      depends_on: []
+      estimated_minutes: 15
+    - id: "T-015"
+      ac_ref: "AC-004"
+      layer: "logic"
+      description: "admin-service.getServiceStats() 구현 — user/health-log/care-link count 3개 조합"
+      test: "각 repository mock 조합 결과가 그대로 반환되는지 — unit"
+      depends_on: ["T-011", "T-012", "T-013"]
+      estimated_minutes: 15
+    - id: "T-016"
+      ac_ref: "AC-001"
+      layer: "logic"
+      description: "admin-service.getRevenueSummary(range?) 구현 — countByStatus + sumSuccessAmountInRange 조합"
+      test: "range 있음/없음 두 경우, repository mock 조합 확인 — unit"
+      depends_on: ["T-003", "T-010"]
+      estimated_minutes: 15
+    - id: "T-017"
+      ac_ref: "AC-002"
+      layer: "logic"
+      description: "admin-service.listSubscribers(query) 구현 — searchSubscribers 위임"
+      test: "쿼리 파라미터 그대로 전달되는지, 빈 결과 처리 — unit"
+      depends_on: ["T-004"]
+      estimated_minutes: 10
+    - id: "T-018"
+      ac_ref: "AC-003"
+      layer: "logic"
+      description: "admin-service.getSubscriberDetail(userId) 구현 — findAllByUserId + 각 Subscription의 findBySubscriptionId 조합"
+      test: "Subscription 여러 건 각각에 결제이력이 정확히 매칭되는지 — unit"
+      depends_on: ["T-005", "T-009"]
+      estimated_minutes: 20
+    - id: "T-019"
+      ac_ref: "AC-005"
+      layer: "logic"
+      description: "admin-service.classifyStuckSubscription(sub, latestAttempt) 순수 함수 — latestAttempt null→undetermined, result=success→recoverable, result=failure→not_recoverable"
+      test: "3개 분기 각각 + 경계값(다른 subscription의 오래된 성공 기록이 섞여도 최신 1건 기준으로만 판단한다는 계약을 docstring/테스트로 명시) — unit"
+      depends_on: []
+      estimated_minutes: 15
+    - id: "T-020"
+      ac_ref: "AC-005"
+      layer: "logic"
+      description: "admin-service.detectStuckSubscriptions() 구현 — findStuckCandidates 순회하며 findLatestBySubscriptionId + classifyStuckSubscription 적용"
+      test: "recoverable/not_recoverable/undetermined 섞인 후보 목록이 각각 올바르게 분류되어 반환 — unit (repository mock)"
+      depends_on: ["T-006", "T-008", "T-019"]
+      estimated_minutes: 20
+    - id: "T-021"
+      ac_ref: "AC-007"
+      layer: "logic"
+      description: "admin-service.detectDuplicateActiveSubscriptions() 구현 — findDuplicateActiveGroups 위임"
+      test: "repository 결과가 그대로 반환되는지 — unit"
+      depends_on: ["T-007"]
+      estimated_minutes: 10
+    - id: "T-022"
+      ac_ref: "AC-006"
+      layer: "logic"
+      description: >
+        admin-service.recoverStuckSubscription(adminUserId, subscriptionId) 구현 —
+        대상 재조회 → 최신 PaymentAttempt 재조회 → classifyStuckSubscription으로
+        서버 재검증(클라이언트 판정 불신) → not recoverable이면 AdminError
+        거부 → recoverable이면 subscription-service.addBillingPeriod로 다음 주기
+        계산 → subscriptionRepository.updateStatus → 성공 시
+        adminActionLogRepository.create (로그 실패는 recovered_log_failed로 구분)
+      test: >
+        (1) recoverable 재검증 통과 시 정상 복구+로그 기록, (2) 서버 재검증에서
+        not_recoverable/undetermined로 나오면 클라이언트가 뭐라 하든 거부하고
+        Subscription 미변경(이게 핵심 테스트), (3) 로그 기록만 실패 시
+        recovered_log_failed 반환 — unit (repository mock)
+      depends_on: ["T-002", "T-006", "T-008", "T-019"]
+      estimated_minutes: 30
+
+    # ── Presentation (T-023 ~ T-029) ─────────────────────────────────
+    - id: "T-023"
+      ac_ref: "AC-008"
+      layer: "presentation"
+      description: "src/proxy.ts matcher에 /admin/:path* 추가 (세션 없으면 /login 리다이렉트 — 관리자 여부는 여기서 판정하지 않음)"
+      test: "비로그인 상태로 /admin 접근 시 /login 리다이렉트 — e2e"
+      depends_on: []
+      estimated_minutes: 10
+    - id: "T-024"
+      ac_ref: "AC-001"
+      layer: "presentation"
+      description: "app/admin/page.tsx 구현 — isAdminEmail 게이트 + getServiceStats/getRevenueSummary 렌더링(숫자/테이블, 기간 쿼리 파라미터)"
+      test: "비관리자 로그인 유저는 /dashboard로 리다이렉트, 관리자는 통계/매출 정상 렌더 — e2e (AC-001, AC-004, AC-008 동시 검증)"
+      depends_on: ["T-014", "T-015", "T-016", "T-023"]
+      estimated_minutes: 25
+    - id: "T-025"
+      ac_ref: "AC-002"
+      layer: "presentation"
+      description: "app/admin/subscribers/page.tsx 구현 — 검색/필터 폼 + listSubscribers 렌더링, isAdminEmail 게이트"
+      test: "검색어/상태 필터 조합, 비관리자 차단 — e2e"
+      depends_on: ["T-014", "T-017", "T-023"]
+      estimated_minutes: 20
+    - id: "T-026"
+      ac_ref: "AC-003"
+      layer: "presentation"
+      description: "app/admin/subscribers/[userId]/page.tsx 구현 — getSubscriberDetail 렌더링, isAdminEmail 게이트"
+      test: "구독+결제이력 렌더, 존재하지 않는 userId 처리, 비관리자 차단 — e2e"
+      depends_on: ["T-014", "T-018", "T-023"]
+      estimated_minutes: 20
+    - id: "T-027"
+      ac_ref: "AC-005"
+      layer: "presentation"
+      description: "app/admin/anomalies/page.tsx 구현 — detectStuckSubscriptions(3분류 배지) + detectDuplicateActiveSubscriptions 렌더링, recoverable만 복구 버튼 노출, isAdminEmail 게이트"
+      test: "3분류 뱃지 정확히 표시, not_recoverable/undetermined엔 복구 버튼 없음, 중복구독 섹션 렌더, 비관리자 차단 — e2e (AC-005, AC-007, AC-008 동시 검증)"
+      depends_on: ["T-014", "T-020", "T-021", "T-023"]
+      estimated_minutes: 25
+    - id: "T-028"
+      ac_ref: "AC-006"
+      layer: "presentation"
+      description: >
+        app/admin/anomalies/actions.ts 구현 — recoverStuckSubscriptionAction
+        Server Action. 페이지의 isAdminEmail 체크와 별개로 이 함수 자신도
+        세션을 다시 읽어 isAdminEmail을 재확인(defense-in-depth)
+      test: >
+        (1) 관리자가 recoverable 건 복구 시 화면 반영, (2) 비관리자 세션으로
+        이 Server Action을 페이지 우회해 직접 호출해도 거부되는지(AC-008
+        핵심 검증), (3) not_recoverable 건을 id 조작으로 직접 호출해도 서버가
+        거부하는지 — e2e
+      depends_on: ["T-022", "T-014", "T-027"]
+      estimated_minutes: 25
+    - id: "T-029"
+      ac_ref: "AC-001"
+      layer: "presentation"
+      description: >
+        AppShell.tsx 확장 — isAdmin prop 추가, NAV_ITEMS를 함수로 조립해
+        isAdmin일 때만 "관리자" 링크 노출 (GEN-007: 게이트만 있고 진입 링크가
+        없으면 미완성 — 클릭해서 도달할 진입점을 반드시 남긴다)
+      test: "관리자 세션은 네비에 '관리자' 링크 노출, 비관리자는 노출 안 됨 — e2e"
+      depends_on: ["T-024"]
+      estimated_minutes: 15
+
+  execution_order:
+    - phase: 1
+      tasks: ["T-001", "T-003", "T-004", "T-005", "T-006", "T-007", "T-008", "T-009", "T-010", "T-011", "T-012", "T-013"]
+    - phase: 2
+      tasks: ["T-002", "T-014", "T-019"]
+    - phase: 3
+      tasks: ["T-015", "T-016", "T-017", "T-018", "T-020", "T-021"]
+    - phase: 4
+      tasks: ["T-022", "T-023"]
+    - phase: 5
+      tasks: ["T-024", "T-025", "T-026", "T-027"]
+    - phase: 6
+      tasks: ["T-028", "T-029"]
+
+note: >
+  (2026-09-19, /run 실행 중 추가) AC-006(recoverStuckSubscription) 구현 중
+  subscription-repository.findById(id)가 필요하다는 게 드러났다 — "대상
+  Subscription을 서버가 재조회해 재검증"하는 절차에 필수인데, 원래 T-001~029
+  분해에는 별도 태스크로 없었다(T-022 recoverStuckSubscription 설계 시
+  findLatestByUserId/updateStatus만 고려했고 id 단건 조회가 빠져 있었음).
+  기능적으로는 정상 동작하고 통합 테스트도 있지만, 분해가 실제 구현 필요를
+  완전히 예측하지 못한 사례로 기록해둔다(Navigator 세션 요약 지적).
+
+manual_verification_checklist:
+  - "프로덕션 환경변수에 실제 ADMIN_EMAIL을 설정하고, 그 계정으로 로그인해 /admin이 정상 노출되는지 확인 (로컬 .env.local 값과 프로덕션 값이 다를 수 있음)"
+  - "ADMIN_EMAIL이 아닌 실제 로그인 계정으로 /admin, /admin/subscribers, /admin/anomalies, Server Action을 각각 직접 URL/호출해 전부 차단되는지 실환경에서 재확인"
+  - "실제 방치된 partial_failure 구독이 생기면(운영 중 우연히 발생 시) recoverable 판정과 복구 후 다음 cron 청구가 실제로 재개되는지 실물 확인 — 이번 사이클은 전부 인위적으로 만든 테스트 데이터로만 검증됨"
+  - "비관리자 세션으로 admin Server Action(recoverStuckSubscriptionAction 등)을 페이지 우회해 직접 호출해도 거부되는지는 자동화 테스트로 커버되지 않았다(Next.js Server Action의 빌드 시 해시된 action reference 특성상 e2e 재현이 어려움) — 코드 리뷰(isAdminEmail 재확인 존재 여부, src/app/admin/anomalies/actions.ts 주석 참고)로 대체 검증됨, 실환경 배포 후 필요시 수동 확인"
+
+validation:
+  total_tasks: 29
+  by_layer: { data: 13, logic: 9, presentation: 7 }
+  dependencies_valid: true
+  all_testable: true
+  all_under_30min: true
+  ac_coverage: "AC-001~008 전체 커버 (AC-001: T-003,T-010,T-016,T-024,T-029 / AC-002: T-004,T-017,T-025 / AC-003: T-005,T-009,T-018,T-026 / AC-004: T-011,T-012,T-013,T-015,T-024 / AC-005: T-006,T-008,T-019,T-020,T-027 / AC-006: T-001,T-002,T-019,T-022,T-028 / AC-007: T-007,T-021,T-027 / AC-008: T-014,T-023,T-024,T-025,T-026,T-027,T-028)"
+  result: "VALID"

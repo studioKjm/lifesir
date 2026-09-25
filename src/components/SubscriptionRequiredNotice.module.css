@@ -1,0 +1,15 @@
+.notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+  padding: 56px 24px;
+}
+
+.text {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink-muted);
+  max-width: 40ch;
+}

@@ -333,6 +333,14 @@ textarea {
   font-size: 12px;
 }
 
+/* 2026-09-21(QA) — data-table은 내용(날짜/이메일 등)이 길면 줄어들지 않고
+   카드/그리드 트랙을 밀어내 페이지 전체가 가로로 넘치는 원인이 됐다(body의
+   overflow-x:hidden 때문에 스크롤바 없이 그냥 잘려 보였음). 표를 이 래퍼로
+   감싸서, 넘치는 부분은 표 자체만 가로 스크롤되게 한다. */
+.table-scroll {
+  overflow-x: auto;
+}
+
 /* ─── 안내 컴포넌트 (EmptyState / ErrorBanner 공용 스타일) ───────── */
 
 [role="status"][data-variant] {

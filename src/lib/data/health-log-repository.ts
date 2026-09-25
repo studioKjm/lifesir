@@ -85,3 +85,13 @@ export async function getRecentLogsForUser(userId: string, limit: number): Promi
   if (error) throw new RepositoryError(`최근 HealthLog 조회 실패 (userId=${userId})`, { cause: error });
   return (data ?? []).map(toRecord);
 }
+
+/** T-011 (seed-v4, AC-004) — 어드민 대시보드 서비스 통계용 전체 개수. */
+export async function countAll(): Promise<number> {
+  const { count, error } = await getSupabaseClient()
+    .from("health_logs")
+    .select("*", { count: "exact", head: true });
+
+  if (error) throw new RepositoryError("HealthLog 전체 개수 조회 실패", { cause: error });
+  return count ?? 0;
+}

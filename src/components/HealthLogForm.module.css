@@ -1,6 +1,8 @@
 .grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* 2026-09-21(QA) — datetime-local input의 브라우저 기본 최소 너비 때문에
+     1fr 트랙이 좁은 화면에서 안 줄어들고 폼 카드 전체를 밀어냈다. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 14px;
 }
 
