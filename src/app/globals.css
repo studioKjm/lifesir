@@ -1,52 +1,39 @@
-/* 디자인 토큰 — "토스 스타일" (2026-09-11 사용자 확정).
-   데스크톱 웹 우선: 시안 단계의 폰 프레임 레이아웃은 상단 네비게이션 바 형태의
-   데스크톱 쉘로 확장했다 (AppShell.tsx 참고). 색상 값은 시안(donghaeng-dashboard-
-   concepts.html [data-version="toss"])과 동일하게 유지해 확정된 톤을 그대로 이어간다. */
+/* 디자인 토큰 — "토스 모던" (2026-09-26 사용자 최종 확정, 레저 컬러 시안
+   donghaeng-ledger-colors.html [data-v="toss"]). 회색 바탕 위에 테두리·그림자 없는
+   흰 카드를 띄우고, 구분선 대신 여백으로 구획한다. 강조는 토스 블루 한 가지. */
 
 :root {
-  --bg: oklch(95% 0.012 250);
-  --surface: oklch(100% 0 0);
-  --surface-2: oklch(97% 0.012 250);
-  --ink: oklch(20% 0.015 260);
-  --ink-muted: oklch(56% 0.012 260);
-  --border: oklch(91% 0.008 260);
+  --bg: #f2f4f6;
+  --surface: #ffffff;
+  --surface-2: #f2f4f6;
+  --surface-3: #f9fafb;
+  --ink: #191f28;
+  --ink-2: #4e5968;
+  --ink-muted: #8b95a1;
+  --border: #e5e8eb;
 
-  --blue: oklch(56% 0.19 260);
-  --blue-dark: oklch(48% 0.19 260);
-  --blue-soft: oklch(93% 0.035 260);
-  --green: oklch(62% 0.13 150);
-  --green-soft: oklch(93% 0.04 150);
-  --amber: oklch(70% 0.15 75);
-  --amber-soft: oklch(93% 0.04 80);
-  --red: oklch(58% 0.2 25);
-  --red-soft: oklch(93% 0.05 25);
-  --violet: oklch(56% 0.17 300);
-  --violet-soft: oklch(93% 0.035 300);
+  --blue: #3182f6;
+  --blue-dark: #1b64da;
+  --blue-soft: #e8f3ff;
+  --green: #0e9f6e;
+  --green-soft: #e6f7f0;
+  --amber: #f06a19;
+  --amber-soft: #fff1e6;
+  --red: #f04452;
+  --red-soft: #ffeeee;
+  --violet: #7b61ff;
+  --violet-soft: #f0edff;
 
-  --radius-lg: 20px;
-  --radius-md: 14px;
-  --radius-sm: 10px;
-  --shadow-card: 0 1px 2px oklch(30% 0.03 260 / 0.06), 0 8px 24px oklch(30% 0.03 260 / 0.06);
+  --radius-lg: 22px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+  --shadow-card: none;
   --container: 1120px;
+  /* 확정 시안이 라이트 단일 테마라 OS 다크모드를 따라가지 않는다(2026-09-27). 폼
+     컨트롤·스크롤바도 라이트로 고정한다. 다크모드는 필요해지면 별도 시안으로 추가. */
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: oklch(18% 0.014 260);
-    --surface: oklch(23% 0.014 260);
-    --surface-2: oklch(26% 0.014 260);
-    --ink: oklch(94% 0.006 260);
-    --ink-muted: oklch(68% 0.014 260);
-    --border: oklch(33% 0.014 260);
-    --blue-soft: oklch(30% 0.06 260);
-    --green-soft: oklch(28% 0.05 150);
-    --amber-soft: oklch(28% 0.05 80);
-    --red-soft: oklch(30% 0.06 25);
-    --violet-soft: oklch(30% 0.06 300);
-    --shadow-card: 0 1px 2px oklch(0% 0 0 / 0.3), 0 8px 24px oklch(0% 0 0 / 0.35);
-    color-scheme: dark;
-  }
-}
 
 * {
   box-sizing: border-box;
@@ -54,18 +41,22 @@
   margin: 0;
 }
 
+/* 2026-09-27 — overflow-x: hidden + height: 100%는 body를 별도 스크롤 컨테이너로
+   만들어 sticky 사이드바/상단 바와 모바일 주소창 접힘을 깨뜨렸다. clip은 가로
+   넘침만 잘라내고 문서 스크롤은 그대로 둔다. */
 html,
 body {
-  height: 100%;
   max-width: 100vw;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
-  min-height: 100%;
+  min-height: 100vh;
   background: var(--bg);
   color: var(--ink);
-  font-family: "Noto Sans KR", "Pretendard", -apple-system, sans-serif;
+  font-family: var(--font-noto-sans-kr), "Noto Sans KR", -apple-system, sans-serif;
+  word-break: keep-all;
+  overflow-wrap: break-word;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -110,7 +101,6 @@ textarea {
 
 .card {
   background: var(--surface);
-  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
   padding: 24px;
@@ -124,9 +114,9 @@ textarea {
   justify-content: center;
   gap: 6px;
   border: none;
-  border-radius: 999px;
-  padding: 12px 22px;
-  font-size: 14px;
+  border-radius: var(--radius-sm);
+  padding: 12px 20px;
+  font-size: 15px;
   font-weight: 700;
   cursor: pointer;
   transition: opacity 0.15s ease, transform 0.05s ease;
@@ -169,8 +159,9 @@ textarea {
 }
 
 .btn--sm {
-  padding: 8px 16px;
+  padding: 8px 14px;
   font-size: 13px;
+  border-radius: 10px;
 }
 
 /* ─── 폼 ──────────────────────────────────────────────────────── */
@@ -183,18 +174,19 @@ textarea {
 
 .field label {
   font-size: 13px;
-  font-weight: 700;
-  color: var(--ink-muted);
+  font-weight: 500;
+  color: var(--ink-2);
 }
 
 .field input,
 .field select,
 .field textarea {
   background: var(--surface-2);
-  border: 1px solid var(--border);
+  border: 1.5px solid transparent;
   border-radius: var(--radius-sm);
-  padding: 12px 14px;
-  font-size: 14px;
+  padding: 13px 14px;
+  font-size: 15px;
+  outline: none;
 }
 
 .field input:focus,
@@ -218,20 +210,22 @@ textarea {
 /* ─── 타이포그래피 (페이지마다 흩어져 있던 인라인 style 통일) ────── */
 
 .page-title {
-  font-size: 24px;
-  font-weight: 900;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
   margin-bottom: 6px;
 }
 
 .page-subtitle {
-  color: var(--ink-muted);
-  font-size: 14px;
-  margin-bottom: 20px;
+  color: var(--ink-2);
+  font-size: 15px;
+  margin-bottom: 24px;
 }
 
 .section-title {
-  font-size: 15px;
-  font-weight: 800;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   margin-bottom: 14px;
 }
 
@@ -277,7 +271,7 @@ textarea {
   align-items: center;
   font-size: 12px;
   font-weight: 800;
-  padding: 5px 11px;
+  padding: 4px 10px;
   border-radius: 999px;
 }
 
@@ -301,26 +295,25 @@ textarea {
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 14.5px;
 }
 
 .data-table th {
   text-align: left;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 12.5px;
+  font-weight: 500;
   color: var(--ink-muted);
-  padding: 0 0 10px;
-  border-bottom: 1px solid var(--border);
+  padding: 0 12px 8px 0;
 }
 
 .data-table td {
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
+  padding: 13px 12px 13px 0;
+  border-top: 1px solid var(--surface-2);
   vertical-align: top;
 }
 
-.data-table tr:last-child td {
-  border-bottom: none;
+.data-table tbody tr:first-child td {
+  border-top: none;
 }
 
 .data-table__value {

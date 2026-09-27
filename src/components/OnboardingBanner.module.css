@@ -19,9 +19,9 @@
   flex: none;
   background: var(--blue);
   color: white;
-  border-radius: 999px;
-  padding: 8px 16px;
+  border-radius: 10px;
+  padding: 8px 14px;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
   white-space: nowrap;
 }

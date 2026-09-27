@@ -59,7 +59,7 @@ export default async function ParentDashboardPage({
         </div>
       )}
 
-      <div className={`card ${styles.liveCard}`}>
+      <div className={styles.liveCard}>
         <ParentDashboardLive careLinkId={careLinkId} initialView={view} />
       </div>
 

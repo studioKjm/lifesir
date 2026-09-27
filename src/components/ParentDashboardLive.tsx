@@ -65,13 +65,13 @@ export function ParentDashboardLive({ careLinkId, initialView }: ParentDashboard
         <DashboardChart summaryByType={view.summaryByType} />
       </div>
 
+      <div className={`card ${styles.emptySpacer}`}>
+      <h2 className="section-title">최근 기록</h2>
       {view.entries.length === 0 ? (
-        <div className={styles.emptySpacer}>
-          <EmptyState variant="empty" description="아직 기록이 없어요." />
-        </div>
+        <EmptyState variant="empty" description="아직 기록이 없어요." />
       ) : (
         <div className="table-scroll">
-          <table className={`data-table ${styles.table}`}>
+          <table className="data-table">
             <thead>
               <tr>
                 <th>시각</th>
@@ -96,6 +96,7 @@ export function ParentDashboardLive({ careLinkId, initialView }: ParentDashboard
           </table>
         </div>
       )}
+      </div>
     </div>
   );
 }

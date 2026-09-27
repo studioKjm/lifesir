@@ -52,10 +52,19 @@ export interface HealthLogEntryDTO {
   loggedByUserId: string;
 }
 
+/** 하루 단위 집계값. 그날 기록이 없으면 value는 null이다. date는 KST 기준 YYYY-MM-DD. */
+export interface DailyPointDTO {
+  date: string;
+  value: number | null;
+}
+
 export interface DashboardSummaryDTO {
   logType: HealthLogType;
   count: number;
   latest?: HealthLogEntryDTO;
+  /** 최근 7일(오늘 포함, 오래된 날 → 오늘 순) 일별 집계 — 스파크라인용 */
+  trend: DailyPointDTO[];
+  loggedToday: boolean;
 }
 
 export interface DashboardViewDTO {

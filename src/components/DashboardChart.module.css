@@ -1,30 +1,45 @@
+/* 토스 모던 KPI 카드 — 떨어진 흰 카드 5장, 굵은 숫자, 아래 7일 스파크라인. */
 .grid {
   display: grid;
-  /* 2026-09-21(QA) — minmax(0, 1fr)로 트랙이 0까지 줄어들 수 있게 해서,
-     900px 미만으로 auto-fit 브레이크포인트가 걸리기 전(900px~1024px 부근)
-     구간에서도 카드 5개가 화면 밖으로 밀려나지 않게 한다. */
+  /* 2026-09-21(QA) — minmax(0, 1fr)로 트랙이 0까지 줄어들 수 있게 해서 카드가
+     화면 밖으로 밀려나지 않게 한다. */
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
 }
 
 .tile {
-  background: var(--surface-2);
-  border-radius: var(--radius-md);
-  padding: 16px 14px;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 20px 20px 14px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.head :global(.badge) {
+  margin-left: auto;
+  padding: 2px 8px;
+  font-size: 11.5px;
 }
 
 .icon {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 999px;
   display: grid;
   place-items: center;
-  margin-bottom: 10px;
+  flex: none;
 }
 
 .icon svg {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
 }
 
 .icon--blue {
@@ -53,48 +68,62 @@
 }
 
 .label {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--ink-muted);
-  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-2);
 }
 
-.count {
-  font-size: 22px;
-  font-weight: 900;
+.value {
+  margin-top: 14px;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.15;
   font-variant-numeric: tabular-nums;
-  margin-bottom: 8px;
+  overflow-wrap: anywhere;
 }
 
-.count small {
-  font-size: 12px;
-  font-weight: 700;
+.value small {
+  font-size: 14px;
+  font-weight: 500;
   color: var(--ink-muted);
-  margin-left: 2px;
+  margin-left: 3px;
+  letter-spacing: 0;
 }
 
-.bar {
-  height: 6px;
-  border-radius: 999px;
-  background: var(--border);
-  overflow: hidden;
-  margin-bottom: 8px;
-}
-
-.barFill {
-  height: 100%;
-  background: var(--blue);
-  border-radius: inherit;
+.valueEmpty {
+  color: var(--border);
 }
 
 .latest {
-  font-size: 11.5px;
+  margin-top: 4px;
+  font-size: 12.5px;
   color: var(--ink-muted);
-  font-variant-numeric: tabular-nums;
 }
 
-@media (max-width: 900px) {
+.spark {
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+.spark svg {
+  display: block;
+  width: 100%;
+  height: 36px;
+}
+
+@media (max-width: 1100px) {
   .grid {
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .value {
+    font-size: 24px;
   }
 }

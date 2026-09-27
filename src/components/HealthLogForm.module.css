@@ -1,9 +1,15 @@
 .grid {
   display: grid;
   /* 2026-09-21(QA) — datetime-local input의 브라우저 기본 최소 너비 때문에
-     1fr 트랙이 좁은 화면에서 안 줄어들고 폼 카드 전체를 밀어냈다. */
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+     1fr 트랙이 좁은 화면에서 안 줄어들고 폼 카드 전체를 밀어냈다.
+     2026-09-27 — 대시보드 오른쪽 좁은 열(340px)에서는 2칸이면 날짜가 잘려서,
+     폼 폭에 맞춰 칸 수가 정해지게 한다(좁으면 1칸, 넓으면 여러 칸). */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   gap: 14px;
+}
+
+.grid > * {
+  min-width: 0;
 }
 
 .full {

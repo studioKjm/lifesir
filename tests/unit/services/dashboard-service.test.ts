@@ -78,3 +78,54 @@ describe("getParentDashboard (AC-007)", () => {
     expect(healthLogRepository.getLogsForUser).not.toHaveBeenCalled();
   });
 });
+
+describe("getOwnDashboard — 7일 추이", () => {
+  beforeEach(() => vi.resetAllMocks());
+
+  // 2026-09-26 12:00 KST
+  const NOW = new Date("2026-09-26T03:00:00Z");
+
+  it("최근 7일을 KST 날짜 기준으로 오래된 날부터 채우고, 기록 없는 날은 null이다", async () => {
+    vi.mocked(healthLogRepository.getLogsForUser).mockResolvedValue([]);
+
+    const dashboard = await getOwnDashboard("u1", NOW);
+    const trend = dashboard.summaryByType.find((s) => s.logType === "sleep")!.trend;
+
+    expect(trend.map((p) => p.date)).toEqual([
+      "2026-09-20", "2026-09-21", "2026-09-22", "2026-09-23", "2026-09-24", "2026-09-25", "2026-09-26",
+    ]);
+    expect(trend.every((p) => p.value === null)).toBe(true);
+  });
+
+  it("운동은 하루 합계, 체중은 그날 마지막 값, 복약은 횟수로 집계한다", async () => {
+    vi.mocked(healthLogRepository.getLogsForUser).mockResolvedValue([
+      record({ id: "e1", logType: "exercise", value: "30분", loggedAt: "2026-09-26T01:00:00Z" }),
+      record({ id: "e2", logType: "exercise", value: "15", loggedAt: "2026-09-25T23:30:00Z" }), // 9/26 08:30 KST
+      record({ id: "w1", logType: "weight", value: "58.2", loggedAt: "2026-09-26T00:30:00Z" }),
+      record({ id: "w2", logType: "weight", value: "58.6", loggedAt: "2026-09-25T22:00:00Z" }), // 9/26 07:00 KST
+      record({ id: "m1", logType: "medication", value: "완료", loggedAt: "2026-09-25T00:00:00Z" }),
+      record({ id: "m2", logType: "medication", value: "완료", loggedAt: "2026-09-24T23:59:00Z" }), // 9/25 KST
+    ]);
+
+    const dashboard = await getOwnDashboard("u1", NOW);
+    const last = (type: string) => dashboard.summaryByType.find((s) => s.logType === type)!.trend;
+
+    expect(last("exercise").at(-1)?.value).toBe(45);
+    expect(last("weight").at(-1)?.value).toBe(58.2);
+    expect(last("medication").at(-2)?.value).toBe(2);
+    expect(last("medication").at(-1)?.value).toBeNull();
+  });
+
+  it("숫자가 아닌 값만 있는 날은 추이 값이 null이지만 오늘 기록 여부는 true다", async () => {
+    vi.mocked(healthLogRepository.getLogsForUser).mockResolvedValue([
+      record({ id: "e1", logType: "exercise", value: "스트레칭", loggedAt: "2026-09-26T01:00:00Z" }),
+    ]);
+
+    const dashboard = await getOwnDashboard("u1", NOW);
+    const exercise = dashboard.summaryByType.find((s) => s.logType === "exercise")!;
+
+    expect(exercise.trend.at(-1)?.value).toBeNull();
+    expect(exercise.loggedToday).toBe(true);
+    expect(dashboard.summaryByType.find((s) => s.logType === "sleep")!.loggedToday).toBe(false);
+  });
+});

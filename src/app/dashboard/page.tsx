@@ -7,6 +7,7 @@ import { DashboardChart } from "@/components/DashboardChart";
 import { HealthLogForm } from "@/components/HealthLogForm";
 import { EmptyState } from "@/components/EmptyState";
 import { OnboardingBanner } from "@/components/OnboardingBanner";
+import Link from "next/link";
 import type { HealthLogType } from "@/types/dto";
 import styles from "./dashboard.module.css";
 
@@ -32,10 +33,34 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
 
   const view = await dashboardService.getOwnDashboard(session.id);
 
+  const loggedTodayCount = view.summaryByType.filter((s) => s.loggedToday).length;
+  const today = new Date().toLocaleDateString("ko-KR", {
+    month: "long",
+    day: "numeric",
+    weekday: "long",
+    timeZone: "Asia/Seoul",
+  });
+
   return (
     <AppShell active="dashboard" user={session} isAdmin={isAdminEmail(session.email)}>
-      <h1 className="page-title">내 건강 대시보드</h1>
-      <p className="page-subtitle">오늘 하루의 기록을 남기고 흐름을 확인하세요.</p>
+      <header className={styles.top}>
+        <div>
+          <p className={styles.date}>{today}</p>
+          <h1 className={styles.title}>
+            {loggedTodayCount === 0 ? (
+              <>{session.name}님, 오늘 첫 기록을 남겨볼까요?</>
+            ) : (
+              <>
+                {session.name}님, 오늘 기록 {view.summaryByType.length}개 중{" "}
+                <em>{loggedTodayCount}개</em>를 채웠어요
+              </>
+            )}
+          </h1>
+        </div>
+        <a href="#log-form" className="btn btn--primary">
+          기록 추가
+        </a>
+      </header>
 
       {!session.agentPersonaId && <OnboardingBanner />}
 
@@ -81,9 +106,16 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
           )}
         </div>
 
-        <div className={`card ${styles.formCard}`}>
-          <h2 className="section-title">기록 추가</h2>
-          <HealthLogForm />
+        <div className={styles.side}>
+          <div className={`card ${styles.logForm}`} id="log-form">
+            <h2 className="section-title">기록 추가</h2>
+            <HealthLogForm />
+          </div>
+          <Link href="/chat" className={styles.coach}>
+            <span className={styles.coachLabel}>AI 코치</span>
+            <span className={styles.coachText}>오늘 컨디션이나 기록이 궁금하면 연령대에 맞춘 코치에게 물어보세요.</span>
+            <span className={styles.coachCta}>대화하기 →</span>
+          </Link>
         </div>
       </div>
     </AppShell>

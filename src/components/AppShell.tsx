@@ -1,5 +1,5 @@
-// 인증된 페이지 공용 데스크톱 쉘 — 상단 네비게이션 바 (모바일 하단 탭바 대신
-// 웹 우선으로 확장, 2026-09-11 사용자 지시).
+// 인증된 페이지 공용 데스크톱 쉘 — 왼쪽 사이드바 (2026-09-26 "토스 모던" 확정으로
+// 상단 바에서 전환). 좁은 화면에서는 같은 사이드바가 상단 바로 접힌다.
 import Link from "next/link";
 import { logoutAction } from "@/app/_lib/auth-actions";
 import styles from "./AppShell.module.css";
@@ -33,42 +33,58 @@ export interface AppShellProps {
   children: React.ReactNode;
 }
 
+function NavIcon({ navKey }: { navKey: NavKey }) {
+  const paths: Record<NavKey, string> = {
+    dashboard: "M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1z",
+    "care-links": "M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1",
+    chat: "M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-8l-5 4v-4H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z",
+    subscription: "M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 10h18M7 15h3",
+    admin: "M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6z",
+  };
+  return (
+    <svg className={styles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={paths[navKey]} />
+    </svg>
+  );
+}
+
 export function AppShell({ active, user, isAdmin = false, children }: AppShellProps) {
   const navItems = buildNavItems(isAdmin);
   return (
-    <>
-      <header className={styles.header}>
-        <div className={`container ${styles.bar}`}>
-          <Link href="/dashboard" className={styles.brand}>
-            <span className={styles.brandMark}>동</span>
-            동행
-          </Link>
-          <nav className={styles.nav} aria-label="주요 메뉴">
-            {navItems.map((item) => (
-              <Link
-                key={item.key}
-                href={item.href}
-                className={item.key === active ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink}
-                aria-current={item.key === active ? "page" : undefined}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-          <div className={styles.right}>
-            <span className={styles.userName}>{user.name}님</span>
-            <span className={styles.avatar} aria-hidden="true">
-              {user.name.slice(0, 1)}
-            </span>
-            <form action={logoutAction}>
-              <button type="submit" className="btn btn--ghost btn--sm">
-                로그아웃
-              </button>
-            </form>
-          </div>
+    <div className={styles.shell}>
+      <aside className={styles.side}>
+        <Link href="/dashboard" className={styles.brand}>
+          <span className={styles.brandMark}>동</span>
+          동행
+        </Link>
+        <nav className={styles.nav} aria-label="주요 메뉴">
+          {navItems.map((item) => (
+            <Link
+              key={item.key}
+              href={item.href}
+              className={item.key === active ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink}
+              aria-current={item.key === active ? "page" : undefined}
+            >
+              <NavIcon navKey={item.key} />
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+        <div className={styles.account}>
+          <span className={styles.avatar} aria-hidden="true">
+            {user.name.slice(0, 1)}
+          </span>
+          <span className={styles.userName}>{user.name}님</span>
+          <form action={logoutAction}>
+            <button type="submit" className={styles.logout}>
+              로그아웃
+            </button>
+          </form>
         </div>
-      </header>
-      <main className={`container ${styles.main}`}>{children}</main>
-    </>
+      </aside>
+      <main className={styles.main}>
+        <div className={styles.content}>{children}</div>
+      </main>
+    </div>
   );
 }

@@ -3,7 +3,7 @@
 import * as healthLogRepository from "@/lib/data/health-log-repository";
 import { assertCareLinkAccepted } from "@/services/care-link-service";
 import type { HealthLogRecord } from "@/lib/data/records";
-import type { DashboardSummaryDTO, DashboardViewDTO, HealthLogEntryDTO, HealthLogType } from "@/types/dto";
+import type { DailyPointDTO, DashboardSummaryDTO, DashboardViewDTO, HealthLogEntryDTO, HealthLogType } from "@/types/dto";
 
 const ALL_LOG_TYPES: HealthLogType[] = ["exercise", "sleep", "weight", "meal", "medication"];
 
@@ -19,21 +19,54 @@ function toEntryDTO(record: HealthLogRecord): HealthLogEntryDTO {
   };
 }
 
-function summarize(entries: HealthLogEntryDTO[]): DashboardSummaryDTO[] {
+const TREND_DAYS = 7;
+
+// 사용자는 한국 기준으로 "오늘"을 생각하므로 일 단위 구분은 KST로 한다.
+const dayKey = (date: Date) => date.toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
+
+function recentDayKeys(now: Date): string[] {
+  return Array.from({ length: TREND_DAYS }, (_, i) =>
+    dayKey(new Date(now.getTime() - (TREND_DAYS - 1 - i) * 24 * 60 * 60 * 1000))
+  );
+}
+
+/**
+ * 하루치 기록을 하나의 값으로 줄인다. 운동은 그날 합계, 수면·체중은 그날 마지막
+ * 기록, 식사·복약은 기록 횟수. value는 "30분"처럼 단위가 붙은 문자열일 수 있어
+ * 앞쪽 숫자만 읽고, 숫자가 아닌 기록(예: "완료")은 합계/최신값 계산에서 건너뛴다.
+ */
+function aggregateDay(logType: HealthLogType, dayEntries: HealthLogEntryDTO[]): number | null {
+  if (dayEntries.length === 0) return null;
+  if (logType === "meal" || logType === "medication") return dayEntries.length;
+  const numbers = dayEntries.map((e) => parseFloat(e.value)).filter((n) => Number.isFinite(n));
+  if (numbers.length === 0) return null;
+  if (logType === "exercise") return numbers.reduce((a, b) => a + b, 0);
+  return numbers[0]; // entries는 logged_at 내림차순이라 첫 값이 그날 마지막 기록
+}
+
+function summarize(entries: HealthLogEntryDTO[], now: Date): DashboardSummaryDTO[] {
+  const days = recentDayKeys(now);
+  const today = days[days.length - 1];
   return ALL_LOG_TYPES.map((logType) => {
     const forType = entries.filter((e) => e.logType === logType);
+    const trend: DailyPointDTO[] = days.map((date) => ({
+      date,
+      value: aggregateDay(logType, forType.filter((e) => dayKey(new Date(e.loggedAt)) === date)),
+    }));
     return {
       logType,
       count: forType.length,
       latest: forType[0], // entries는 이미 logged_at 내림차순
+      trend,
+      loggedToday: forType.some((e) => dayKey(new Date(e.loggedAt)) === today),
     };
   });
 }
 
-export async function getOwnDashboard(userId: string): Promise<DashboardViewDTO> {
+export async function getOwnDashboard(userId: string, now: Date = new Date()): Promise<DashboardViewDTO> {
   const records = await healthLogRepository.getLogsForUser(userId);
   const entries = records.map(toEntryDTO);
-  return { entries, summaryByType: summarize(entries) };
+  return { entries, summaryByType: summarize(entries, now) };
 }
 
 /**

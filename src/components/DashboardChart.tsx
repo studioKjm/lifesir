@@ -1,6 +1,8 @@
-// T-023 — 대시보드 집계 시각화 (AC-006, AC-007). log_type별 기록 수를 막대로
-// 비교하고 가장 최근 기록을 함께 보여준다. 본인/부모 대시보드 양쪽에서 재사용한다.
+// T-023 — 대시보드 집계 시각화 (AC-006, AC-007). 기록 종류마다 카드 한 장에
+// 가장 최근 값과 7일 추이 스파크라인을 보여준다("토스 모던", 2026-09-26).
+// 본인/부모 대시보드 양쪽에서 재사용한다.
 import type { DashboardSummaryDTO, HealthLogType } from "@/types/dto";
+import { Sparkline } from "./Sparkline";
 import styles from "./DashboardChart.module.css";
 
 const LABELS: Record<HealthLogType, string> = {
@@ -62,28 +64,42 @@ export interface DashboardChartProps {
   summaryByType: DashboardSummaryDTO[];
 }
 
-export function DashboardChart({ summaryByType }: DashboardChartProps) {
-  const maxCount = Math.max(1, ...summaryByType.map((s) => s.count));
+// 서버/클라이언트(부모 대시보드 polling) 양쪽에서 같은 문자열이 나오도록 시간대를 고정한다.
+function formatLatestDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("ko-KR", { month: "long", day: "numeric", timeZone: "Asia/Seoul" });
+}
 
+export function DashboardChart({ summaryByType }: DashboardChartProps) {
   return (
     <div className={styles.grid}>
       {summaryByType.map((summary) => (
-        <div key={summary.logType} className={styles.tile}>
-          <span className={`${styles.icon} ${styles[`icon--${TONES[summary.logType]}`]}`} aria-hidden="true">
-            <LogTypeIcon type={summary.logType} />
-          </span>
-          <p className={styles.label}>{LABELS[summary.logType]}</p>
-          <p className={styles.count}>
-            {summary.count}
-            <small>건</small>
-          </p>
-          <div className={styles.bar}>
-            <div className={styles.barFill} style={{ width: `${(summary.count / maxCount) * 100}%` }} />
+        <section key={summary.logType} className={styles.tile} aria-label={LABELS[summary.logType]}>
+          <div className={styles.head}>
+            <span className={`${styles.icon} ${styles[`icon--${TONES[summary.logType]}`]}`} aria-hidden="true">
+              <LogTypeIcon type={summary.logType} />
+            </span>
+            <p className={styles.label}>{LABELS[summary.logType]}</p>
+            {summary.loggedToday && <span className="badge badge--ok">오늘</span>}
           </div>
+          {summary.latest ? (
+            <p className={styles.value}>
+              {summary.latest.value}
+              {summary.latest.unit && <small>{summary.latest.unit}</small>}
+            </p>
+          ) : (
+            <p className={`${styles.value} ${styles.valueEmpty}`}>—</p>
+          )}
           <p className={styles.latest}>
-            {summary.latest ? `최근 ${summary.latest.value}${summary.latest.unit ?? ""}` : "기록 없음"}
+            {summary.latest
+              ? summary.loggedToday
+                ? `누적 ${summary.count}건`
+                : `마지막 기록 ${formatLatestDate(summary.latest.loggedAt)}`
+              : "기록 전"}
           </p>
-        </div>
+          <div className={styles.spark}>
+            <Sparkline values={summary.trend.map((p) => p.value)} label={LABELS[summary.logType]} />
+          </div>
+        </section>
       ))}
     </div>
   );
