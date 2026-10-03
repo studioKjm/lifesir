@@ -88,3 +88,47 @@ export function AppShell({ active, user, isAdmin = false, children }: AppShellPr
     </div>
   );
 }
+
+/**
+ * 각 라우트 loading.tsx 공용 — 서버 응답을 기다리는 동안 쉘 모양을 먼저 보여준다
+ * (2026-10-03, 페이지 이동 지연 개선). 동적 라우트는 loading.tsx가 있어야 Link가
+ * 이 화면까지 미리 받아두고(부분 프리페치) 클릭 즉시 전환된다. 세션을 모르므로
+ * 이름·관리자 메뉴는 그리지 않는다.
+ */
+export function ShellSkeleton({ active }: { active: NavKey }) {
+  return (
+    <div className={styles.shell}>
+      <aside className={styles.side}>
+        <Link href="/dashboard" className={styles.brand}>
+          <span className={styles.brandMark}>동</span>
+          동행
+        </Link>
+        <nav className={styles.nav} aria-label="주요 메뉴">
+          {buildNavItems(active === "admin").map((item) => (
+            <Link
+              key={item.key}
+              href={item.href}
+              className={item.key === active ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink}
+              aria-current={item.key === active ? "page" : undefined}
+            >
+              <NavIcon navKey={item.key} />
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+      </aside>
+      <main className={styles.main} aria-busy="true">
+        <div className={styles.content}>
+          <span className={styles.srOnly}>불러오는 중</span>
+          <div className={styles.skelTitle} />
+          <div className={styles.skelRow}>
+            <div className={styles.skelCard} />
+            <div className={styles.skelCard} />
+            <div className={styles.skelCard} />
+          </div>
+          <div className={styles.skelPanel} />
+        </div>
+      </main>
+    </div>
+  );
+}

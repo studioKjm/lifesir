@@ -7,7 +7,7 @@ import { getSession } from "@/app/_lib/session";
 import { isAdminEmail, getRevenueSummary, getServiceStats } from "@/services/admin-service";
 import { AppShell } from "@/components/AppShell";
 import type { SubscriptionStatus } from "@/types/dto";
-import styles from "./admin.module.css";
+import styles from "../admin.module.css";
 
 export const metadata = { title: "관리자 대시보드 — 동행" };
 

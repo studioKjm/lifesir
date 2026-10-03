@@ -138,6 +138,63 @@
   margin: 0 auto;
 }
 
+/* ShellSkeleton — 로딩 중 본문 자리표시. 회색 면만 깔고 은은하게 깜빡인다. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.skelTitle,
+.skelCard,
+.skelPanel {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  animation: skelPulse 1.2s ease-in-out infinite alternate;
+}
+
+.skelTitle {
+  width: min(360px, 70%);
+  height: 34px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 24px;
+}
+
+.skelRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.skelCard {
+  height: 132px;
+}
+
+.skelPanel {
+  height: 320px;
+}
+
+@keyframes skelPulse {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skelTitle,
+  .skelCard,
+  .skelPanel {
+    animation: none;
+  }
+}
+
 /* 좁은 화면: 사이드바를 상단 바로 접는다. 메뉴는 한 줄 가로 스크롤
    (2026-09-19 QA — 글자가 중간에서 줄바꿈되지 않게). */
 @media (max-width: 860px) {

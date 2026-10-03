@@ -19,6 +19,10 @@ const LABELS: Record<HealthLogType, string> = {
   medication: "복약",
 };
 
+// 대시보드 "최근 기록" 표에 보여줄 줄 수 — 기록이 쌓여도 페이지가 길어지지 않게
+// 최신 순 상위만 보여준다. 누적 건수/추이 집계(summaryByType)는 전체 기록 기준 그대로.
+const RECENT_ROWS = 10;
+
 const ERROR_COPY: Record<string, string> = {
   INVALID_INPUT: "종류, 값, 기록 시각은 필수예요.",
   NOT_AUTHORIZED: "이 사용자의 건강 기록을 대신 입력할 권한이 없어요.",
@@ -89,7 +93,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
                   </tr>
                 </thead>
                 <tbody>
-                  {view.entries.map((entry) => (
+                  {view.entries.slice(0, RECENT_ROWS).map((entry) => (
                     <tr key={entry.id}>
                       <td>{new Date(entry.loggedAt).toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short" })}</td>
                       <td>{LABELS[entry.logType]}</td>
